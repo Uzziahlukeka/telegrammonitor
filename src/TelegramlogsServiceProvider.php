@@ -7,7 +7,6 @@ use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Uzhlaravel\Telegramlogs\Commands\TelegramlogsCommand;
 
-
 class TelegramlogsServiceProvider extends PackageServiceProvider
 {
     public function configurePackage(Package $package): void
@@ -24,7 +23,6 @@ class TelegramlogsServiceProvider extends PackageServiceProvider
             ->hasMigration('create_telegramlogs_table')
             ->hasCommand(TelegramlogsCommand::class);
     }
-
 
     /**
      * Register the application's services.
