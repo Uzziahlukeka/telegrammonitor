@@ -11,11 +11,6 @@ class TelegramlogsServiceProvider extends PackageServiceProvider
 {
     public function configurePackage(Package $package): void
     {
-        /*
-         * This class is a Package Service Provider
-         *
-         * More info: https://github.com/spatie/laravel-package-tools
-         */
         $package
             ->name('telegramlogs')
             ->hasConfigFile()
@@ -24,19 +19,14 @@ class TelegramlogsServiceProvider extends PackageServiceProvider
             ->hasCommand(TelegramlogsCommand::class);
     }
 
-    /**
-     * Register the application's services.
-     *
-     * @return void
-     */
     public function register()
     {
-        // Merge the package's configuration with the application's config
+        parent::register();
+
         $this->mergeConfigFrom(
             __DIR__.'/../config/telegramlogs.php', 'telegramlogs'
         );
 
-        // Register the custom Telegram logger with the application
         $this->app->singleton(Telegramlogs::class, function ($app) {
             return new Telegramlogs(
                 $app['config']->get('telegramlogs.bot_token'),
@@ -46,84 +36,57 @@ class TelegramlogsServiceProvider extends PackageServiceProvider
         });
     }
 
-    /**
-     * Bootstrap the application's services.
-     *
-     * @return void
-     */
     public function boot()
     {
-        // Publish the configuration file to the application's config directory
+        parent::boot();
+
         $this->publishes([
             __DIR__.'/../config/telegramlogs.php' => config_path('telegramlogs.php'),
-        ], 'config');
+        ], 'telegramlogs-config');
 
-        // Add required environment variables to the .env file if they don't exist
         $this->addEnvVariables();
-
-        // Dynamically add the Telegram logging channel to the Laravel logging configuration
         $this->addTelegramLogChannel();
     }
 
-    /**
-     * Add the required environment variables to the .env file if they don't exist.
-     *
-     * @return void
-     */
     protected function addEnvVariables()
     {
         $envPath = base_path('.env');
 
-        // Check if the .env file exists
-        if (File::exists($envPath)) {
-            // Read the content of the .env file
-            $envContent = File::get($envPath);
+        if (! File::exists($envPath)) {
+            return;
+        }
 
-            // Add the necessary environment variables if they don't exist
-            $this->appendEnvVariable($envContent, 'TELEGRAM_BOT_TOKEN', 'your-bot-token-here');
-            $this->appendEnvVariable($envContent, 'TELEGRAM_CHAT_ID', 'your-chat-id-here');
-            $this->appendEnvVariable($envContent, 'TELEGRAM_TOPIC_ID', 'your-topic-id-here'); // Optional
+        $envContent = File::get($envPath);
+        $requiredVariables = [
+            'TELEGRAM_LOGS_BOT_TOKEN' => 'your_bot_token_here',
+            'TELEGRAM_LOGS_CHAT_ID' => 'your_chat_id_here',
+            'TELEGRAM_LOGS_TOPIC_ID' => null, // Optional
+            'TELEGRAM_LOGS_LEVEL' => 'critical',
+        ];
 
-            // Write the updated content back to the .env file
-            File::put($envPath, $envContent);
+        $changesMade = false;
+        foreach ($requiredVariables as $key => $defaultValue) {
+            if (! preg_match("/^{$key}=/m", $envContent)) {
+                $envContent .= "\n{$key}={$defaultValue}";
+                $changesMade = true;
+            }
+        }
+
+        if ($changesMade) {
+            File::put($envPath, trim($envContent)."\n");
         }
     }
 
-    /**
-     * Append an environment variable to the .env file if it's not already present.
-     *
-     * @param  string  $envContent
-     * @param  string  $key
-     * @param  string  $value
-     * @return void
-     */
-    protected function appendEnvVariable(&$envContent, $key, $value)
-    {
-        // Check if the environment variable already exists
-        if (! str_contains($envContent, $key)) {
-            // Append the variable to the .env file content
-            $envContent .= "\n$key=$value";
-        }
-    }
-
-    /**
-     * Add the Telegram logging channel to the logging configuration
-     *
-     * @return void
-     */
     protected function addTelegramLogChannel()
     {
-        // Check if the Telegram logging channel already exists
-        $channels = config('logging.channels', []);
-
-        // Check if the 'telegram' channel is not already added
-        if (! array_key_exists('telegram', $channels)) {
-            // Add the Telegram logging channel dynamically
-            config(['logging.channels.telegram' => [
+        // Merge with existing channels without overwriting
+        $this->app['config']->set('logging.channels.telegram', array_merge(
+            [
                 'driver' => 'custom',
-                'via' => Telegramlogs::class, // Custom logger class
-                'level' => config('telegramlogs.channels.telegram.level', 'critical'),  // Use level from config or default to 'critical'
-            ]]);
-        }
+                'via' => Telegramlogs::class,
+                'level' => env('TELEGRAM_LOGS_LEVEL', 'critical'),
+            ],
+            config('logging.channels.telegram', [])
+        ));
     }
 }

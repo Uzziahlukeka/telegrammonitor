@@ -1,19 +1,22 @@
-# this is about monitoring your logs in telegram
+# Telegram Logs Monitor for Laravel
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/uzhlaravel/telegramlogs.svg?style=flat-square)](https://packagist.org/packages/uzhlaravel/telegramlogs)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/uzhlaravel/telegramlogs/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/uzhlaravel/telegramlogs/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/uzhlaravel/telegramlogs/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/uzhlaravel/telegramlogs/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/uzhlaravel/telegramlogs.svg?style=flat-square)](https://packagist.org/packages/uzhlaravel/telegramlogs)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+Get real-time Laravel application logs directly in your Telegram channel. This package provides instant monitoring of your application's critical events through Telegram messages, with support for threaded discussions and Markdown formatting.
 
-## Support us
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/telegramlogs.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/telegramlogs)
+## Features
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+- 📨 Instant delivery of logs to Telegram
+- 🔔 Configurable log levels (emergency to debug)
+- 🧵 Support for Telegram topic threads
+- ✏️ MarkdownV2 formatted messages
+- 📦 Automatic splitting of long messages
+- ⏱ Configurable timeout for API calls
+- 🛠 Test command to verify your setup
 
 ## Installation
 
@@ -21,13 +24,6 @@ You can install the package via composer:
 
 ```bash
 composer require uzhlaravel/telegramlogs
-```
-
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="telegramlogs-migrations"
-php artisan migrate
 ```
 
 You can publish the config file with:
@@ -40,13 +36,20 @@ This is the contents of the published config file:
 
 ```php
 return [
+    'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+    'chat_id' => env('TELEGRAM_CHAT_ID'),
+    'topic_id' => env('TELEGRAM_TOPIC_ID'),
 ];
 ```
 
-Optionally, you can publish the views using
+This is the contents in .env:
 
-```bash
-php artisan vendor:publish --tag="telegramlogs-views"
+```php
+TELEGRAM_LOGS_BOT_TOKEN=your_bot_token_here
+TELEGRAM_LOGS_CHAT_ID=your_chat_id_here
+# Optional:
+TELEGRAM_LOGS_TOPIC_ID=your_thread_id_here
+TELEGRAM_LOGS_LEVEL=error
 ```
 
 ## Usage
