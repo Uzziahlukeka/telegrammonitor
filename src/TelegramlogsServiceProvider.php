@@ -44,37 +44,7 @@ class TelegramlogsServiceProvider extends PackageServiceProvider
             __DIR__.'/../config/telegramlogs.php' => config_path('telegramlogs.php'),
         ], 'telegramlogs-config');
 
-        $this->addEnvVariables();
         $this->addTelegramLogChannel();
-    }
-
-    protected function addEnvVariables()
-    {
-        $envPath = base_path('.env');
-
-        if (! File::exists($envPath)) {
-            return;
-        }
-
-        $envContent = File::get($envPath);
-        $requiredVariables = [
-            'TELEGRAM_LOGS_BOT_TOKEN' => 'your_bot_token_here',
-            'TELEGRAM_LOGS_CHAT_ID' => 'your_chat_id_here',
-            'TELEGRAM_LOGS_TOPIC_ID' => null, // Optional
-            'TELEGRAM_LOGS_LEVEL' => 'critical',
-        ];
-
-        $changesMade = false;
-        foreach ($requiredVariables as $key => $defaultValue) {
-            if (! preg_match("/^{$key}=/m", $envContent)) {
-                $envContent .= "\n{$key}={$defaultValue}";
-                $changesMade = true;
-            }
-        }
-
-        if ($changesMade) {
-            File::put($envPath, trim($envContent)."\n");
-        }
     }
 
     protected function addTelegramLogChannel()
