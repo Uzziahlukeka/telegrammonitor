@@ -2,7 +2,6 @@
 
 namespace Uzhlaravel\Telegramlogs;
 
-use Illuminate\Support\Facades\File;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Uzhlaravel\Telegramlogs\Commands\TelegramlogsCommand;
