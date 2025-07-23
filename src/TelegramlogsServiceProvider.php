@@ -2,61 +2,48 @@
 
 namespace Uzhlaravel\Telegramlogs;
 
-use Illuminate\Support\Facades\File;
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Uzhlaravel\Telegramlogs\Commands\TelegramlogsCommand;
+use Illuminate\Support\ServiceProvider;
 
-class TelegramlogsServiceProvider extends PackageServiceProvider
+class TelegramlogsServiceProvider extends ServiceProvider
 {
-    public function configurePackage(Package $package): void
-    {
-        $package
-            ->name('telegramlogs')
-            ->hasConfigFile()
-            ->hasViews()
-            ->hasMigration('create_telegramlogs_table')
-            ->hasCommand(TelegramlogsCommand::class);
-    }
-
     public function register()
     {
-        parent::register();
-
+        // Merge package config with app config
         $this->mergeConfigFrom(
-            __DIR__.'/../config/telegramlogs.php', 'telegramlogs'
+            __DIR__ . '/../config/telegramlogs.php',
+            'telegramlogs'
         );
-
-        $this->app->singleton(Telegramlogs::class, function ($app) {
-            return new Telegramlogs(
-                $app['config']->get('telegramlogs.bot_token'),
-                $app['config']->get('telegramlogs.chat_id'),
-                $app['config']->get('telegramlogs.topic_id')
-            );
-        });
     }
 
     public function boot()
     {
-        parent::boot();
-
+        // Publish config file
         $this->publishes([
-            __DIR__.'/../config/telegramlogs.php' => config_path('telegramlogs.php'),
+            __DIR__ . '/../config/telegramlogs.php' => config_path('telegramlogs.php'),
         ], 'telegramlogs-config');
 
+        // Add telegram channel to logging configuration
         $this->addTelegramLogChannel();
     }
 
     protected function addTelegramLogChannel()
     {
-        // Merge with existing channels without overwriting
-        $this->app['config']->set('logging.channels.telegram', array_merge(
-            [
+        // Get current logging config
+        $loggingConfig = config('logging.channels', []);
+
+        // Add telegram channel if it doesn't exist, using the config from telegramlogs
+        if (!isset($loggingConfig['telegram'])) {
+            $telegramChannelConfig = config('telegramlogs.channels.telegram', [
                 'driver' => 'custom',
                 'via' => Telegramlogs::class,
-                'level' => env('TELEGRAM_LOGS_LEVEL', 'critical'),
-            ],
-            config('logging.channels.telegram', [])
-        ));
+                'level' => config('telegramlogs.level', 'critical'),
+                'ignore_empty_messages' => true,
+            ]);
+
+            $loggingConfig['telegram'] = $telegramChannelConfig;
+
+            // Update the config
+            config(['logging.channels' => $loggingConfig]);
+        }
     }
 }
