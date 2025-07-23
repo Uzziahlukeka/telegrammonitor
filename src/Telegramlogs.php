@@ -11,12 +11,19 @@ use Monolog\LogRecord;
 class Telegramlogs extends AbstractProcessingHandler
 {
     protected string $botToken;
+
     protected string $chatId;
+
     protected ?string $topicId;
+
     protected Client $client;
+
     protected bool $ignoreEmptyMessages;
+
     protected int $timeout;
+
     protected bool $splitLongMessages;
+
     protected int $maxMessageLength;
 
     public function __construct(
@@ -24,9 +31,9 @@ class Telegramlogs extends AbstractProcessingHandler
         bool $bubble = true,
         ?Client $client = null,
         bool $ignoreEmptyMessages = true,
-        int $timeout = null,
-        bool $splitLongMessages = null,
-        int $maxMessageLength = null
+        ?int $timeout = null,
+        ?bool $splitLongMessages = null,
+        ?int $maxMessageLength = null
     ) {
         parent::__construct($level, $bubble);
 
@@ -56,7 +63,7 @@ class Telegramlogs extends AbstractProcessingHandler
             $this->sendMessage($formattedMessage);
         } catch (GuzzleException $e) {
             // Log the error to the default logger if Telegram fails
-            error_log('Failed to send Telegram log: ' . $e->getMessage());
+            error_log('Failed to send Telegram log: '.$e->getMessage());
         }
     }
 
@@ -68,15 +75,15 @@ class Telegramlogs extends AbstractProcessingHandler
 
         $context = '';
         if ($includeContext && $record->context) {
-            $context = "\n\nContext:\n```json\n" .
-                json_encode($record->context, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) .
+            $context = "\n\nContext:\n```json\n".
+                json_encode($record->context, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).
                 "\n```";
         }
 
         $extra = '';
         if ($record->extra) {
-            $extra = "\n\nExtra:\n```json\n" .
-                json_encode($record->extra, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) .
+            $extra = "\n\nExtra:\n```json\n".
+                json_encode($record->extra, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).
                 "\n```";
         }
 
@@ -85,8 +92,8 @@ class Telegramlogs extends AbstractProcessingHandler
         if ($includeStackTrace &&
             $record->level->value >= \Monolog\Level::Error->value &&
             isset($record->context['exception'])) {
-            $stackTrace = "\n\nStack Trace:\n```\n" .
-                $record->context['exception']->getTraceAsString() .
+            $stackTrace = "\n\nStack Trace:\n```\n".
+                $record->context['exception']->getTraceAsString().
                 "\n```";
         }
 
@@ -128,7 +135,7 @@ class Telegramlogs extends AbstractProcessingHandler
     {
         $characters = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'];
         foreach ($characters as $char) {
-            $text = str_replace($char, '\\' . $char, $text);
+            $text = str_replace($char, '\\'.$char, $text);
         }
 
         return $text;
