@@ -3,8 +3,6 @@
 namespace Uzhlaravel\Telegramlogs\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use Monolog\Logger;
-use Uzhlaravel\Telegramlogs\Telegramlogs as TelegramLoggerInstance;
 
 /**
  * @method static void emergency(string $message, array $context = [])
@@ -16,18 +14,30 @@ use Uzhlaravel\Telegramlogs\Telegramlogs as TelegramLoggerInstance;
  * @method static void info(string $message, array $context = [])
  * @method static void debug(string $message, array $context = [])
  * @method static void log($level, string $message, array $context = [])
- * @method static Logger channel(string $channel = null)
- * @method static TelegramLoggerInstance setBotToken(string $token)
- * @method static TelegramLoggerInstance setChatId(string $chatId)
- * @method static TelegramLoggerInstance setTopicId(?string $topicId)
- * @method static TelegramLoggerInstance setTimeout(int $timeout)
  *
- * @see \Uzhlaravel\Telegramlogs\Telegramlogs
+ * @see \Illuminate\Log\LogManager
  */
 class Telegramlogs extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return \Uzhlaravel\Telegramlogs\Telegramlogs::class;
+        // Return the log manager and specify telegram channel
+        return 'log';
+    }
+
+    /**
+     * Get the telegram logger instance
+     */
+    public static function channel()
+    {
+        return static::getFacadeRoot()->channel('telegram');
+    }
+
+    /**
+     * Override the __callStatic to route calls to telegram channel
+     */
+    public static function __callStatic($method, $args)
+    {
+        return static::channel()->$method(...$args);
     }
 }
