@@ -10,7 +10,7 @@ class TelegramlogsServiceProvider extends ServiceProvider
     {
         // Merge package config with app config
         $this->mergeConfigFrom(
-            __DIR__ . '/../config/telegramlogs.php',
+            __DIR__.'/../config/telegramlogs.php',
             'telegramlogs'
         );
     }
@@ -19,7 +19,7 @@ class TelegramlogsServiceProvider extends ServiceProvider
     {
         // Publish config file
         $this->publishes([
-            __DIR__ . '/../config/telegramlogs.php' => config_path('telegramlogs.php'),
+            __DIR__.'/../config/telegramlogs.php' => config_path('telegramlogs.php'),
         ], 'telegramlogs-config');
 
         // Add telegram channel to logging configuration
@@ -32,7 +32,7 @@ class TelegramlogsServiceProvider extends ServiceProvider
         $loggingConfig = config('logging.channels', []);
 
         // Add telegram channel if it doesn't exist, using the config from telegramlogs
-        if (!isset($loggingConfig['telegram'])) {
+        if (! isset($loggingConfig['telegram'])) {
             $telegramChannelConfig = config('telegramlogs.channels.telegram', [
                 'driver' => 'custom',
                 'via' => Telegramlogs::class,
