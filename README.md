@@ -1,8 +1,7 @@
 # Telegram Logs Monitor for Laravel
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/uzhlaravel/telegramlogs.svg?style=flat-square)](https://packagist.org/packages/uzhlaravel/telegramlogs)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/uzhlaravel/telegramlogs/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/uzhlaravel/telegramlogs/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/uzhlaravel/telegramlogs/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/uzhlaravel/telegramlogs/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+![GitHub Tests Action Status](https://github.com/Uzziahlukeka/telegrammonitor/actions/workflows/run-tests.yml/badge.svg)
 [![Total Downloads](https://img.shields.io/packagist/dt/uzhlaravel/telegramlogs.svg?style=flat-square)](https://packagist.org/packages/uzhlaravel/telegramlogs)
 
 Get real-time Laravel application logs directly in your Telegram channel. This package provides instant monitoring of your application's critical events through Telegram messages, with support for threaded discussions and Markdown formatting.
