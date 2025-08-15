@@ -45,10 +45,10 @@ return [
 This is the contents in .env:
 
 ```php
-TELEGRAM_LOGS_BOT_TOKEN=your_bot_token_here
-TELEGRAM_LOGS_CHAT_ID=your_chat_id_here
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_ID=your_chat_id_here
 # Optional:
-TELEGRAM_LOGS_TOPIC_ID=your_thread_id_here
+TELEGRAM_TOPIC_ID=your_thread_id_here
 TELEGRAM_LOGS_LEVEL=error
 ```
 
