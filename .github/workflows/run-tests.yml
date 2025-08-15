@@ -1,4 +1,4 @@
-name: run-tests
+name: run-tests for the app
 
 on:
   push:
