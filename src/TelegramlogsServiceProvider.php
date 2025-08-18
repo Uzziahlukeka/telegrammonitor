@@ -3,6 +3,8 @@
 namespace Uzhlaravel\Telegramlogs;
 
 use Illuminate\Support\ServiceProvider;
+use Uzhlaravel\Telegramlogs\Commands\InstallTelegramLogsCommand;
+use Uzhlaravel\Telegramlogs\Commands\TelegramlogsCommand;
 
 class TelegramlogsServiceProvider extends ServiceProvider
 {
@@ -22,8 +24,21 @@ class TelegramlogsServiceProvider extends ServiceProvider
             __DIR__.'/../config/telegramlogs.php' => config_path('telegramlogs.php'),
         ], 'telegramlogs-config');
 
+        // Register the command
+        $this->registerCommands();
+
         // Add telegram channel to logging configuration
         $this->addTelegramLogChannel();
+    }
+
+    protected function registerCommands()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                TelegramlogsCommand::class,
+                InstallTelegramLogsCommand::class,
+            ]);
+        }
     }
 
     protected function addTelegramLogChannel()

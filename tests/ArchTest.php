@@ -5,13 +5,13 @@ arch('it will not use debugging functions')
     ->toUseStrictTypes()
     ->not->toUse(['die', 'dd', 'dump']);
 
-arch()
+arch('it will verify commands')
     ->expect('Uzhlaravel\Telegramlogs\Commands')
     ->toBeClasses()
     ->toExtend('Illuminate\Console\Command')
-    ->toOnlyBeUsedIn('src\Commands');
+    ->toOnlyBeUsedIn(['src\Commands', 'Uzhlaravel\Telegramlogs']);
 
-arch()
+arch('it will verify facades')
     ->expect('Uzhlaravel\Telegramlogs\Facades')
     ->toBeClasses()
     ->toExtend('Illuminate\Support\Facades\Facade');
