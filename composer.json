@@ -1,14 +1,16 @@
 {
     "name": "uzhlaravel/telegramlogs",
-    "description": "this is about monitoring your logs in telegram",
+    "description": "Monitor your Laravel application logs in real-time through Telegram. This package delivers instant notifications of critical events directly to your Telegram channel, with support for threaded discussions and Markdown formatting.",
     "keywords": [
         "uzhlaravel",
         "laravel",
         "telegramlogs",
+        "telegram monitor",
         "telegram",
+        "direct message",
         "logs"
     ],
-    "homepage": "https://github.com/uzziahlukeka/telegramlogs",
+    "homepage": "https://github.com/Uzziahlukeka/telegrammonitor",
     "license": "MIT",
     "authors": [
         {
