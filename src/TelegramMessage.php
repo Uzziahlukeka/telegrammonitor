@@ -29,7 +29,7 @@ class TelegramMessage
         $this->topicId = config('telegramlogs.topic_message_id');
         $this->parseMode = config('telegramlogs.parse_mode');
 
-        $this->client = new Client();
+        $this->client = new Client;
     }
 
     /**
