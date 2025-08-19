@@ -21,7 +21,6 @@ class Telegramlogs extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        // Return the log manager and specify telegram channel
         return 'log';
     }
 

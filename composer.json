@@ -4,7 +4,9 @@
     "keywords": [
         "uzhlaravel",
         "laravel",
-        "telegramlogs"
+        "telegramlogs",
+        "telegram",
+        "logs"
     ],
     "homepage": "https://github.com/uzziahlukeka/telegramlogs",
     "license": "MIT",
