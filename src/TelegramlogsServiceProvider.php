@@ -15,6 +15,17 @@ class TelegramlogsServiceProvider extends ServiceProvider
             __DIR__.'/../config/telegramlogs.php',
             'telegramlogs'
         );
+
+        // Register the TelegramMessage service
+        $this->app->singleton('telegram-message', function () {
+            return new TelegramMessage();
+        });
+
+        // Register the TelegramMessage class
+        $this->app->singleton(TelegramMessage::class, function () {
+            return new TelegramMessage();
+        });
+
     }
 
     public function boot()

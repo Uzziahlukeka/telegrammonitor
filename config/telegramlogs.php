@@ -35,6 +35,17 @@ return [
     'topic_id' => env('TELEGRAM_TOPIC_ID', null),
 
     /*
+     |--------------------------------------------------------------------------
+     | Telegram Topic Message ID (Optional)
+     |--------------------------------------------------------------------------
+     |
+     | If you're using Telegram groups with topics/threads, you can specify
+     | the topic message ID here. Add this to your .env file as TELEGRAM_TOPIC_ID
+     |
+     */
+    'topic_message_id' => env('TELEGRAM_TOPIC_MESSAGE_ID', null),
+
+    /*
     |--------------------------------------------------------------------------
     | Default Logging Level
     |--------------------------------------------------------------------------
