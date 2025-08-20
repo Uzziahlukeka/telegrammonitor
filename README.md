@@ -6,251 +6,365 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/uzhlaravel/telegramlogs.svg?style=flat-square)](https://packagist.org/packages/uzhlaravel/telegramlogs)
 [![License](https://img.shields.io/packagist/l/uzhlaravel/telegramlogs.svg?style=flat-square)](https://packagist.org/packages/uzhlaravel/telegramlogs)
 
-A comprehensive Laravel package that seamlessly integrates Telegram notifications into your application's logging system. Monitor critical events, debug issues, and stay informed about your application's health in real-time through Telegram channels.
-## Key Features
+---
 
-### Core Functionality
-- **Monolog Integration** - Native Laravel logging channel support
-- **Direct Messaging API** - Send custom messages programmatically
-- **Real-time Notifications** - Instant delivery to Telegram channels/groups
-- **Automatic Installation** - One-command setup with guided configuration
-- **Configuration Testing** - Built-in commands to verify your setup
+A comprehensive Laravel package that seamlessly integrates Telegram notifications into your application's logging system.  
+Monitor critical events, debug issues, and stay informed about your application's health in real-time through Telegram channels or groups.
+
+Supercharge your Laravel application monitoring with real-time Telegram messages from a form or external source.
+
+---
+
+## Table of Contents
+
+- [Introduction](#introduction)
+    - [Why Use Telegram Logs Monitor?](#why-use-telegram-logs-monitor)
+    - [why use telegram messages ?](#why-use-telegram-messages-)
+    - [Core Features](#core-features)
+- [Installation](#installation)
+    - [Prerequisites](#prerequisites)
+    - [Quick Installation](#quick-installation)
+    - [Automated Setup](#automated-setup)
+    - [Manual Installation](#manual-installation)
+    - [Log Channel Setup](#log-channel-setup)
+    - [Configuration](#configuration)
+        - [Environment Variables](#environment-variables)
+        - [Reference](#reference)
+- [Basic Usage](#basic-usage)
+    - [LOGS](#logs)
+    - [Standard Logging](#standard-logging)
+    - [Command Line Utilities](#command-line-utilities)
+    - [Output Formatting](#output-formatting)
+    - [Supported Log Levels](#supported-log-levels)
+    - [Direct Messaging Interface](#direct-messaging-interface)
+- [Getting Telegram Credentials](#getting-telegram-credentials)
+    - [1. Create a Telegram Bot](#1-create-a-telegram-bot)
+    - [2. Get Chat ID](#2-get-chat-id)
+    - [3. Forum Topics (optional)](#3-forum-topics-optional)
+- [Security Best Practices](#security-best-practices)
+- [Contributing](#contributing)
+    - [Development Setup](#development-setup)
+- [Support](#support)
+- [License](#license)
+- [Attribution](#attribution)
+
+---
+
+## Introduction
+
+Telegram Logs Monitor is a comprehensive Laravel package that seamlessly integrates Telegram notifications into your application's logging system. Monitor critical events, debug issues, and stay informed about your application's health in real-time through Telegram channels.
+
+### Why Use Telegram Logs Monitor?
+
+- **Real-time Monitoring** → Instant delivery of critical notifications to your Telegram channels
+- **Comprehensive Coverage** → Support for all PSR-3 log levels from debug to emergency
+- **Smart Formatting** → Beautiful JSON formatting with MarkdownV2 and HTML support
+- **Error Resilience** → Graceful fallback when Telegram is unavailable
+- **Developer Friendly** → Interactive setup and comprehensive testing tools
+
+### why use telegram messages ?
+
+it is made to simplify life and handle receiving messages from a form or external source as form and view it into your telegram channel.
+
+- **Real-time Messaging** → Instant delivery of messages notifications to your Telegram channels
+- **Smart Formatting** → Beautiful text format with details on the source
+- **Error Resilience** → Graceful fallback when Telegram is unavailable
+
+
+---
+
+---
+
+## Core Features
+
+### Essential Functionality
+- **Monolog Integration**
+- **Direct Messaging API**
+- **Real-time Notifications**
+- **Interactive Setup**
+- **Comprehensive Testing**
 
 ### Advanced Capabilities
-- **Multi-level Logging** - Support for all PSR-3 log levels (debug to emergency)
-- **Forum Groups Support** - Send messages to specific topics/threads
-- **Message Formatting** - MarkdownV2 and HTML support with JSON pretty-printing
-- **Smart Message Handling** - Automatic splitting for messages exceeding Telegram's limits
-- **Error Resilience** - Graceful fallback when Telegram is unavailable
-- **Performance Optimized** - Configurable timeouts and connection pooling
+- **Multi-level Logging**
+- **Forum Groups Support**
+- **Smart Message Handling**
+- **Performance Optimized**
+- **Error Resilience**
 
-## Prerequisites
-
-Ensure the following requirements are met before installation:
-
-1. **Telegram Bot Token**: Obtain from [BotFather](https://core.telegram.org/bots#botfather)
-2. **Telegram Channel/Group Chat ID**: Destination for log notifications
-3. **Laravel Framework**: Version 8.0 or higher
+---
 
 ## Installation
 
-Integrate the package via Composer:
+### Prerequisites
+- **PHP**: 8.1 or higher
+- **Laravel**: 10.0 or higher
+- **Telegram Bot Token**: Obtain from [BotFather](https://core.telegram.org/bots#botfather)
+- **Telegram Channel/Group Chat ID**: Destination for log notifications
 
-```bash
+### Quick Installation
+
+```php
 composer require uzhlaravel/telegramlogs
 ```
 
-### Automated Installation Procedure
+### Automated Setup
 
-Execute the installation command for guided configuration:
-
-```bash
+```php
 php artisan telegramlogs:install
 ```
 
-This automated process will:
-1. Deploy the configuration file
-2. Guide through environment variable setup
-3. Optionally configure Telegram as the default logging channel
-4. Validate configuration integrity
+This guided process will:
+- Publish the configuration file
+- Help set up environment variables
+- Optionally configure Telegram as your default logging channel
+- Test your configuration
 
-### Manual Installation Process
+### Manual Installation
 
-Publish the configuration file manually:
-
-```bash
+```php
 php artisan vendor:publish --tag="telegramlogs-config"
+```
+
+### Log Channel Setup
+
+`.env` file:
+
+```php
+LOG_CHANNEL=telegram
 ```
 
 ## Configuration
 
-### Automated Configuration
+### Environment Variables
 
-Execute the installation command for interactive setup:
-
-```bash
-php artisan telegramlogs:install
-```
-
-### Manual Environment Configuration
-
-Update your `.env` file with the following parameters:
-
-```ini
+```php
 TELEGRAM_BOT_TOKEN=your_bot_token_here
 TELEGRAM_CHAT_ID=your_chat_id_here
-
-# Optional configuration parameters:
 TELEGRAM_TOPIC_ID=your_thread_id_here
 TELEGRAM_TOPIC_MESSAGE_ID=your_message_id_here
 TELEGRAM_TIMEOUT=10
-TELEGRAM_LOGS_LEVEL=error
-```
-### Environment Variables
-
-| Variable | Description                      | Required | Default | Comments |
-|----------|----------------------------------|----------|---------| ---------|
-| `TELEGRAM_BOT_TOKEN` | Your bot's API token             | Yes | - |
-| `TELEGRAM_CHAT_ID` | Target chat/channel ID           | Yes | - |
-| `TELEGRAM_TOPIC_ID` | Forum logs topic ID (optional)   | No | `null` | for your logs topic|
-| `TELEGRAM_TOPIC_MESSAGE_ID` | Forum direct topic ID (optional) | No | `null` |for your direct msg such as a form|
-| `TELEGRAM_LOG_LEVEL` | Minimum log level                | No | `critical` |
-| `TELEGRAM_TIMEOUT` | API request timeout              | No | `10` |
-
-
-### Supported Log Levels
-
-| Severity Level | Description |
-|----------------|-------------|
-| Debug | Detailed diagnostic information |
-| Info | General operational messages |
-| Notice | Significant normal events |
-| Warning | Potential issue notifications |
-| Error | Runtime error conditions |
-| Critical | Critical condition alerts |
-| Alert | Immediate action requirements |
-| Emergency | System instability events |
-
-### Log Channel Configuration
-
-Set the default logging channel in your `.env` file:
-
-```ini
-LOG_CHANNEL=telegram
+TELEGRAM_LOG_LEVEL=critical
 ```
 
-## Implementation
+### Reference
 
-### Standard Logging Implementation
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| TELEGRAM_BOT_TOKEN | Bot API token | Yes | - |
+| TELEGRAM_CHAT_ID | Target chat/channel ID | Yes | - |
+| TELEGRAM_TOPIC_ID | Forum topic ID | No | null |
+| TELEGRAM_TOPIC_MESSAGE_ID | Forum thread ID | No | null |
+| TELEGRAM_LOG_LEVEL | Minimum log level | No | critical |
+| TELEGRAM_TIMEOUT | API timeout (seconds) | No | 10 |
+
+---
+
+
+## Basic Usage
+
+---
+
+### LOGS
+
+---
+
+### Standard Logging
 
 ```php
-// Error logging implementation
 \Log::error('Payment processing failure detected');
 
-// Exception handling with logging
 try {
-    // Application code execution
+    // Application code
 } catch (\Exception $e) {
-    \Log::critical('API connectivity issue: ' . $e->getMessage());
+    \Log::critical('API connectivity issue', [
+        'exception' => $e->getMessage(),
+        'code' => $e->getCode()
+    ]);
 }
 
-// Debug information recording
-\Log::debug('User authentication successful', ['user_id' => auth()->id()]);
+\Log::debug('User authentication successful', [
+    'user_id' => auth()->id(),
+    'ip' => request()->ip()
+]);
 ```
 
 ### Command Line Utilities
 
 #### Configuration Validation
 
-```bash
+```php
 php artisan telegramlogs:test
 ```
 
-Available options:
-- `--message="Custom notification"` - Dispatch custom test message
-- `--level=error` - Specify log severity level
-- `--list` - Display available log levels
-- `--config` - Show current configuration values
+Options:
+- `--message="Custom notification"` → Dispatch custom test message
+- `--level=error` → Specify log severity level
+- `--list` → Display available log levels
+- `--config` → Show current configuration values
 
-Custom message example:
-```bash
+Example:
+
+```php
 php artisan telegramlogs:test --message="System health check" --level=warning
 ```
 
-#### Configuration Display
-
-```bash
-php artisan telegramlogs:test --config
-```
-
-## Output Formatting
-
-Notifications delivered to your Telegram channel will feature structured JSON formatting:
+### Output Formatting
 
 ```json
 {
-    "message": "Database connection failure",
-    "level": "CRITICAL",
-    "datetime": "2025-08-17T11:55:13.885292+00:00",
-    "context": {
-        "exception": "PDOException: driver not found"
-    }
+  "message": "Database connection failure",
+  "level": "CRITICAL",
+  "datetime": "2025-08-17T11:55:13.885292+00:00",
+  "context": {
+    "exception": "PDOException: driver not found"
+  }
 }
 ```
 
-![Telegram Notification Sample](img.png)
+---
 
+## Supported Log Levels
+
+| Level | Description | Example Use Case |
+|-------|-------------|------------------|
+| Debug | Detailed diagnostic info | Query debugging, variable inspection |
+| Info | General operational messages | User login, cache clearing |
+| Notice | Significant normal events | New user registration, order created |
+| Warning | Potential issues | API rate limiting, deprecated usage |
+| Error | Runtime errors | Payment failure, external API errors |
+| Critical | Critical condition alerts | Database connection failure |
+| Alert | Immediate action required | Security breach detection |
+| Emergency | System instability | Server down, infrastructure failure |
+
+---
+
+## Command Line Tools
+
+- This is for testing and configuration purposes only.
+- You can use the facade to send messages to your Telegram channel.
+
+```php
+php artisan telegramlogs:test --config //to see the config
+php artisan telegramlogs:test --list // ot see the list of log levels
+php artisan telegramlogs:test --message="System health check" --level=warning // to send a custom message
+```
+---
 ## Direct Messaging Interface
 
-To initiate direct messaging, import the facade:
+---
+
+To send a message to your Telegram channel or from a form or just a simple word you want to pass , you have to use the facade for it but make sure to import it first.
 
 ```php
-use Uzhlaravel\Telegramlogs\Facades\TelegramMessage;
+use TelegramLogs\Facades\Telegram; 
 ```
 
-Implementation examples:
+then after this you can use the facade to send a message to your channel. like this : 
 
 ```php
+
+use Uzhlaravel\Telegramlogs\Facades\TelegramMessage;
+
 // Basic message transmission
-TelegramMessage::message('System notification from Laravel');
+TelegramMessage::message('System maintenance scheduled for tonight');
+
+// Message with options 
+TelegramMessage::send('System maintenance scheduled for tonight', [
+    'parse_mode' => 'HTML',
+    'disable_web_page_preview' => true,
+    'reply_markup' => [
+        'inline_keyboard' => [
+            [
+                ['text' => 'Start', 'callback_data' => 'start']
+            ]
+        ]
+    ]
+]);
 
 // Targeted chat messaging
-TelegramMessage::toChat('alternative_chat_id', 'Specific channel message');
+TelegramMessage::toChat('-100123456789', 'Specific channel notification');
 
-// Connection verification
+// Connection testing
 TelegramMessage::test();
+
 ```
 
-## 📱 Getting Telegram Credentials
+---
+
+## Getting Telegram Credentials
 
 ### 1. Create a Telegram Bot
-
-1. Open Telegram and search for [@BotFather](https://t.me/BotFather)
-2. Send `/newbot` and follow the instructions
-3. Choose a name and username for your bot
-4. Copy the provided API token
+1. Open @BotFather
+2. Send `/newbot` and follow instructions
+3. Copy token → `TELEGRAM_BOT_TOKEN`
 
 ### 2. Get Chat ID
+- **Private chats** → getUpdates API
+- **Channels** → Add bot as admin → `-100xxxxxxxxx`
+- **Groups** → Add bot, mention it → get `chat.id`
 
-For **private chats**:
-1. Send a message to your bot
-2. Visit: `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`
-3. Look for the `chat.id` value
+### 3. Forum Topics (optional)
+1. Create a topic
+2. Send message
+3. Get `message_thread_id`
 
-For **channels**:
-1. Add your bot as an administrator
-2. The chat ID is usually in the format: `-100xxxxxxxxx`
+---
 
-For **groups**:
-1. Add your bot to the group
-2. Send a message mentioning the bot
-3. Check the API endpoint above for the group's chat ID
+## Security Best Practices
 
-### 3. Forum Topics (Optional)
+- Never commit tokens
+- Restrict bot access
+- Store secrets in `.env`
+- Audit access regularly
 
-For groups with topics enabled:
-1. Create a topic in your group
-2. Send a message to that topic
-3. Use the API endpoint to find the `message_thread_id`
-## Security Protocol
+---
 
-- Maintain bot token confidentiality
-- Implement chat-specific bot access restrictions
-- Review [our security policy](../../security/policy) for vulnerability disclosure procedures
+## Contributing
 
-## Version History
+1. Fork repo
+2. Create branch → `git checkout -b feature/amazing-feature`
+3. Commit → `git commit -m 'Add some amazing feature'`
+4. Push → `git push origin feature/amazing-feature`
+5. Open PR
 
-Detailed release notes available in [CHANGELOG](CHANGELOG.md).
+### Development Setup
 
-## Contribution Guidelines
+```php 
 
-We encourage community contributions. Please review [CONTRIBUTING](CONTRIBUTING.md) for participation guidelines.
+git clone https://github.com/Uzziahlukeka/telegrammonitor.git
+composer install
+composer analyze
+composer format
+composer test
 
-## Licensing
+```
 
-MIT License. Complete license details available in [LICENSE](LICENSE.md).
+---
+
+## Support
+
+- Read docs + wiki
+- Open issues on GitHub
+- Join discussions
+
+If helpful, consider:
+- ⭐ Starring repo
+-  Sharing experience
+-  Reporting issues
+
+---
+
+## License
+
+This package is open-sourced software licensed under the [MIT License](LICENSE.md).
+
+---
 
 ## Attribution
 
-- [Uzziahlukeka](https://github.com/Uzziahlukeka/telegrammonitor)
-- [Contributor List](../../contributors)
+- Developed by [Uzziahlukeka](https://github.com/Uzziahlukeka)
+- Inspired by the Laravel community
+
+--- 
+
+💖 Made with love by [Uzziah Lukeka](https://github.com/Uzziahlukeka)
