@@ -256,7 +256,7 @@ php artisan telegramlogs:test --message="System health check" --level=warning //
 To send a message to your Telegram channel or from a form or just a simple word you want to pass , you have to use the facade for it but make sure to import it first.
 
 ```php
-use TelegramLogs\Facades\Telegram; 
+use Uzhlaravel\Telegramlogs\Facades\TelegramMessage;
 ```
 
 then after this you can use the facade to send a message to your channel. like this : 
