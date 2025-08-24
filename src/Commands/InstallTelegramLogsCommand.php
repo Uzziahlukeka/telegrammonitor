@@ -54,6 +54,22 @@ class InstallTelegramLogsCommand extends Command
             $this->call('telegramlogs:test');
         }
 
+        // 5. Ask user to star the GitHub repository
+        $this->newLine();
+        $this->info('🌟 If you find this package useful, please consider starring it on GitHub!');
+        $this->line('GitHub Repository: https://github.com/Uzziahlukeka/telegrammonitor');
+
+        if ($this->confirm('Would you like to open the GitHub repository now?', false)) {
+            if (PHP_OS_FAMILY === 'Darwin') {
+                exec('open https://github.com/Uzziahlukeka/telegrammonitor');
+            } elseif (PHP_OS_FAMILY === 'Windows') {
+                exec('start https://github.com/Uzziahlukeka/telegrammonitor');
+            } elseif (PHP_OS_FAMILY === 'Linux') {
+                exec('xdg-open https://github.com/Uzziahlukeka/telegrammonitor');
+            }
+            $this->info('GitHub repository opened in your browser!');
+        }
+
         $this->info('Telegram Logs Monitor installed successfully!');
         $this->line('Remember to create a Telegram bot and get your credentials if you haven\'t already.');
 
