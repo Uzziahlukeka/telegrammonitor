@@ -56,10 +56,10 @@ class InstallTelegramLogsCommand extends Command
 
         // 5. Ask user to star the GitHub repository
         $this->newLine();
-        $this->info('🌟 If you find this package useful, please consider starring it on GitHub!');
+        $this->info('show some love, please consider starring it on GitHub!');
         $this->line('GitHub Repository: https://github.com/Uzziahlukeka/telegrammonitor');
 
-        if ($this->confirm('Would you like to open the GitHub repository now?', false)) {
+        if ($this->confirm('Would you like to open the GitHub repository now?', true)) {
             if (PHP_OS_FAMILY === 'Darwin') {
                 exec('open https://github.com/Uzziahlukeka/telegrammonitor');
             } elseif (PHP_OS_FAMILY === 'Windows') {
