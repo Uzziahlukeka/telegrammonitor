@@ -5,6 +5,7 @@ namespace Uzhlaravel\Telegramlogs\Commands;
 use Illuminate\Console\Command;
 use Uzhlaravel\Telegramlogs\Facades\TelegramActivity;
 use Uzhlaravel\Telegramlogs\Facades\Telegramlogs;
+use Uzhlaravel\Telegramlogs\TelegramMessage;
 
 class TelegramlogsCommand extends Command
 {
@@ -62,7 +63,7 @@ class TelegramlogsCommand extends Command
         $token = config('telegramlogs.bot_token');
         $env = config('telegramlogs.environments', 'production');
         $currentEnv = app()->environment();
-        $active = app()->make(\Uzhlaravel\Telegramlogs\TelegramMessage::class)->isActiveInCurrentEnvironment();
+        $active = app()->make(TelegramMessage::class)->isActiveInCurrentEnvironment();
 
         $this->info('Current Telegram Logs Configuration:');
         $this->table(
@@ -97,7 +98,7 @@ class TelegramlogsCommand extends Command
 
         $env = app()->environment();
         $allowed = config('telegramlogs.environments', 'production');
-        $isActive = app()->make(\Uzhlaravel\Telegramlogs\TelegramMessage::class)->isActiveInCurrentEnvironment();
+        $isActive = app()->make(TelegramMessage::class)->isActiveInCurrentEnvironment();
 
         if (! $isActive) {
             $this->warn("Notifications are disabled for the '{$env}' environment.");
@@ -132,7 +133,7 @@ class TelegramlogsCommand extends Command
 
     protected function sendTestActivity(): int
     {
-        $isActive = app()->make(\Uzhlaravel\Telegramlogs\TelegramMessage::class)->isActiveInCurrentEnvironment();
+        $isActive = app()->make(TelegramMessage::class)->isActiveInCurrentEnvironment();
 
         if (! $isActive) {
             $env = app()->environment();
