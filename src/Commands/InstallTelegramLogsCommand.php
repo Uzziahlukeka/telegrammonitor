@@ -6,90 +6,110 @@ use Illuminate\Console\Command;
 
 class InstallTelegramLogsCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'telegramlogs:install';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Install the Telegram Logs Monitor package';
+    protected $description = 'Interactive setup for the Telegram Logs Monitor package';
 
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
-    public function handle()
+    public function handle(): int
     {
-        $this->info('Installing Telegram Logs Monitor package...');
+        $this->components->info('Installing Telegram Logs Monitor...');
+        $this->newLine();
 
-        // 1. Publish configuration
+        // 1. Publish config
         $this->call('vendor:publish', [
             '--provider' => 'Uzhlaravel\Telegramlogs\TelegramlogsServiceProvider',
-            '--tag' => 'telegramlogs-config',
+            '--tag'      => 'telegramlogs-config',
         ]);
 
-        // 2. Display setup instructions
-        $this->info('Please configure these environment variables in your .env file:');
-        $this->line('TELEGRAM_BOT_TOKEN=your_bot_token_here');
-        $this->line('TELEGRAM_CHAT_ID=your_chat_id_here');
-        $this->line('Optional:');
-        $this->line('TELEGRAM_TOPIC_ID=your_thread_id_here');
-        $this->line('TELEGRAM_LOGS_LEVEL=error');
+        $this->newLine();
 
-        // 3. Update logging configuration
-        if ($this->confirm('Would you like to set Telegram as your default log channel?', true)) {
+        // 2. Show required env vars
+        $this->components->info('Add the following variables to your .env file:');
+        $this->newLine();
+        $this->line('  <comment>Required:</comment>');
+        $this->line('  TELEGRAM_BOT_TOKEN=your_bot_token_here');
+        $this->line('  TELEGRAM_CHAT_ID=your_chat_id_here');
+        $this->newLine();
+        $this->line('  <comment>Optional:</comment>');
+        $this->line('  TELEGRAM_LOG_LEVEL=critical          # min level to send (default: critical)');
+        $this->line('  TELEGRAM_TOPIC_ID=                   # forum thread ID');
+        $this->line('  TELEGRAM_TIMEOUT=10                  # API timeout in seconds');
+        $this->newLine();
+        $this->line('  <comment>Environment control (new):</comment>');
+        $this->line('  TELEGRAM_ENVIRONMENTS=production     # comma-separated list or * for all');
+        $this->newLine();
+        $this->line('  <comment>Activity log (new):</comment>');
+        $this->line('  TELEGRAM_ACTIVITY_LOG=false          # set true to enable model activity tracking');
+        $this->line('  TELEGRAM_ACTIVITY_LOG_LEVEL=info     # log level for activity notifications');
+        $this->newLine();
+
+        // 3. Optionally set as default log channel
+        if ($this->confirm('Set Telegram as your default log channel?', false)) {
             $this->updateEnvVariable('LOG_CHANNEL', 'telegram');
-            $this->info('Default log channel set to "telegram" in .env');
+            $this->components->info('Default log channel set to "telegram" in .env');
         }
 
-        // 4. Test configuration
-        if ($this->confirm('Would you like to test your Telegram configuration now?', true)) {
+        // 4. Optionally enable activity log
+        if ($this->confirm('Enable activity log (model event tracking)?', false)) {
+            $this->updateEnvVariable('TELEGRAM_ACTIVITY_LOG', 'true');
+            $this->components->info('Activity log enabled in .env');
+        }
+
+        // 5. Optionally enable in all environments (useful for local dev)
+        if ($this->confirm('Enable notifications in ALL environments (not just production)?', false)) {
+            $this->updateEnvVariable('TELEGRAM_ENVIRONMENTS', '*');
+            $this->components->info('Notifications enabled for all environments in .env');
+        }
+
+        // 6. Optionally test the configuration
+        if ($this->confirm('Test your Telegram configuration now?', true)) {
             $this->call('telegramlogs:test');
         }
 
-        // 5. Ask user to star the GitHub repository
         $this->newLine();
-        $this->info('show some love, please consider starring it on GitHub!');
-        $this->line('GitHub Repository: https://github.com/Uzziahlukeka/telegrammonitor');
+        $this->components->info('Telegram Logs Monitor installed successfully!');
+        $this->newLine();
+        $this->line('Usage tips:');
+        $this->line('  • <info>php artisan telegramlogs:test</info>          – send a test log');
+        $this->line('  • <info>php artisan telegramlogs:test --activity</info> – test activity notification');
+        $this->line('  • <info>php artisan telegramlogs:test --config</info>  – view current config');
+        $this->newLine();
+        $this->line('Add <info>HasTelegramActivity</info> trait to models for automatic event tracking:');
+        $this->line('  use Uzhlaravel\Telegramlogs\Traits\HasTelegramActivity;');
+        $this->newLine();
 
-        if ($this->confirm('Would you like to open the GitHub repository now?', true)) {
-            if (PHP_OS_FAMILY === 'Darwin') {
-                exec('open https://github.com/Uzziahlukeka/telegrammonitor');
-            } elseif (PHP_OS_FAMILY === 'Windows') {
-                exec('start https://github.com/Uzziahlukeka/telegrammonitor');
-            } elseif (PHP_OS_FAMILY === 'Linux') {
-                exec('xdg-open https://github.com/Uzziahlukeka/telegrammonitor');
-            }
-            $this->info('GitHub repository opened in your browser!');
+        $this->line('GitHub: https://github.com/Uzziahlukeka/telegrammonitor');
+
+        if ($this->confirm('Open the GitHub repository?', false)) {
+            match (PHP_OS_FAMILY) {
+                'Darwin'  => exec('open https://github.com/Uzziahlukeka/telegrammonitor'),
+                'Windows' => exec('start https://github.com/Uzziahlukeka/telegrammonitor'),
+                default   => exec('xdg-open https://github.com/Uzziahlukeka/telegrammonitor'),
+            };
+            $this->components->info('Repository opened in your browser.');
         }
 
-        $this->info('Telegram Logs Monitor installed successfully!');
-        $this->line('Remember to create a Telegram bot and get your credentials if you haven\'t already.');
-
-        return 0;
+        return self::SUCCESS;
     }
 
-    /**
-     * Update an environment variable in the .env file
-     *
-     * @param  string  $key
-     * @param  string  $value
-     */
-    protected function updateEnvVariable($key, $value)
+    protected function updateEnvVariable(string $key, string $value): void
     {
         $envPath = base_path('.env');
 
-        if (file_exists($envPath)) {
-            $content = file_get_contents($envPath);
-            $content = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $content);
-            file_put_contents($envPath, $content);
+        if (! file_exists($envPath)) {
+            return;
         }
+
+        $content = file_get_contents($envPath);
+
+        if (preg_match("/^{$key}=/m", $content)) {
+            // Update existing line
+            $content = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $content);
+        } else {
+            // Append new line
+            $content .= "\n{$key}={$value}";
+        }
+
+        file_put_contents($envPath, $content);
     }
 }
