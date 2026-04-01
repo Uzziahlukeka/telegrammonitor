@@ -4,7 +4,6 @@ namespace Uzhlaravel\Telegramlogs\Commands;
 
 use Illuminate\Console\Command;
 use Uzhlaravel\Telegramlogs\Facades\TelegramActivity;
-use Uzhlaravel\Telegramlogs\Facades\TelegramMessage;
 use Uzhlaravel\Telegramlogs\Facades\Telegramlogs;
 
 class TelegramlogsCommand extends Command
@@ -103,7 +102,7 @@ class TelegramlogsCommand extends Command
         if (! $isActive) {
             $this->warn("Notifications are disabled for the '{$env}' environment.");
             $this->warn("TELEGRAM_ENVIRONMENTS is set to '{$allowed}'.");
-            $this->warn("Set TELEGRAM_ENVIRONMENTS=* in .env to enable in all environments.");
+            $this->warn('Set TELEGRAM_ENVIRONMENTS=* in .env to enable in all environments.');
 
             return self::FAILURE;
         }
@@ -114,9 +113,9 @@ class TelegramlogsCommand extends Command
 
         try {
             Telegramlogs::log($level, $message, [
-                'command'     => 'telegramlogs:test',
+                'command' => 'telegramlogs:test',
                 'environment' => $env,
-                'timestamp'   => now()->toDateTimeString(),
+                'timestamp' => now()->toDateTimeString(),
             ]);
 
             $this->newLine();
@@ -153,7 +152,7 @@ class TelegramlogsCommand extends Command
 
         $sent = TelegramActivity::withProperties([
             'trigger' => 'telegramlogs:test --activity',
-            'time'    => now()->toDateTimeString(),
+            'time' => now()->toDateTimeString(),
         ])->event('created')->dispatch('Test activity dispatched from Artisan');
 
         if ($sent) {

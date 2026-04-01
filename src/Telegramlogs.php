@@ -142,14 +142,14 @@ class Telegramlogs extends AbstractProcessingHandler
     {
         return match (strtolower($level)) {
             'emergency' => '🚨',
-            'alert'     => '🔴',
-            'critical'  => '💥',
-            'error'     => '❌',
-            'warning'   => '⚠️',
-            'notice'    => '📢',
-            'info'      => 'ℹ️',
-            'debug'     => '🐛',
-            default     => '📋',
+            'alert' => '🔴',
+            'critical' => '💥',
+            'error' => '❌',
+            'warning' => '⚠️',
+            'notice' => '📢',
+            'info' => 'ℹ️',
+            'debug' => '🐛',
+            default => '📋',
         };
     }
 
@@ -196,9 +196,9 @@ class Telegramlogs extends AbstractProcessingHandler
     protected function sendPartialMessage(string $url, string $message): void
     {
         $payload = [
-            'chat_id'                  => $this->chatId,
-            'text'                     => $message,
-            'parse_mode'               => 'MarkdownV2',
+            'chat_id' => $this->chatId,
+            'text' => $message,
+            'parse_mode' => 'MarkdownV2',
             'disable_web_page_preview' => true,
         ];
 
@@ -207,7 +207,7 @@ class Telegramlogs extends AbstractProcessingHandler
         }
 
         $this->client->post($url, [
-            'json'    => $payload,
+            'json' => $payload,
             'timeout' => $this->timeout,
         ]);
     }

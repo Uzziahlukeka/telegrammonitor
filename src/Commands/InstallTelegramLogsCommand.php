@@ -18,7 +18,7 @@ class InstallTelegramLogsCommand extends Command
         // 1. Publish config
         $this->call('vendor:publish', [
             '--provider' => 'Uzhlaravel\Telegramlogs\TelegramlogsServiceProvider',
-            '--tag'      => 'telegramlogs-config',
+            '--tag' => 'telegramlogs-config',
         ]);
 
         $this->newLine();
@@ -82,9 +82,9 @@ class InstallTelegramLogsCommand extends Command
 
         if ($this->confirm('Open the GitHub repository?', false)) {
             match (PHP_OS_FAMILY) {
-                'Darwin'  => exec('open https://github.com/Uzziahlukeka/telegrammonitor'),
+                'Darwin' => exec('open https://github.com/Uzziahlukeka/telegrammonitor'),
                 'Windows' => exec('start https://github.com/Uzziahlukeka/telegrammonitor'),
-                default   => exec('xdg-open https://github.com/Uzziahlukeka/telegrammonitor'),
+                default => exec('xdg-open https://github.com/Uzziahlukeka/telegrammonitor'),
             };
             $this->components->info('Repository opened in your browser.');
         }

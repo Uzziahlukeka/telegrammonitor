@@ -135,7 +135,7 @@ class TelegramMessage
         try {
             $payload = array_merge([
                 'chat_id' => $this->chatId,
-                'text'    => $text,
+                'text' => $text,
             ], $options);
 
             if ($this->topicId) {

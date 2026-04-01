@@ -2,6 +2,7 @@
 
 namespace Uzhlaravel\Telegramlogs\Facades;
 
+use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Facade;
 
 /**
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static void debug(string $message, array $context = [])
  * @method static void log($level, string $message, array $context = [])
  *
- * @see \Illuminate\Log\LogManager
+ * @see LogManager
  */
 class Telegramlogs extends Facade
 {

@@ -56,9 +56,9 @@ class TelegramlogsServiceProvider extends ServiceProvider
 
         if (! isset($loggingConfig['telegram'])) {
             $loggingConfig['telegram'] = config('telegramlogs.channels.telegram', [
-                'driver'                => 'custom',
-                'via'                   => Telegramlogs::class,
-                'level'                 => config('telegramlogs.level', 'critical'),
+                'driver' => 'custom',
+                'via' => Telegramlogs::class,
+                'level' => config('telegramlogs.level', 'critical'),
                 'ignore_empty_messages' => true,
             ]);
 

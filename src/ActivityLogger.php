@@ -215,12 +215,12 @@ class ActivityLogger
     protected function eventEmoji(string $event): string
     {
         return match ($event) {
-            'created'      => '🟢',
-            'updated'      => '🔵',
-            'deleted'      => '🔴',
-            'restored'     => '♻️',
+            'created' => '🟢',
+            'updated' => '🔵',
+            'deleted' => '🔴',
+            'restored' => '♻️',
             'forceDeleted' => '💣',
-            default        => '📋',
+            default => '📋',
         };
     }
 }

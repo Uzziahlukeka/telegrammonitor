@@ -16,7 +16,7 @@ use Uzhlaravel\Telegramlogs\ActivityLogger;
  * @method static bool dispatch(string $description = '')
  * @method static bool log(string $description)
  *
- * @see \Uzhlaravel\Telegramlogs\ActivityLogger
+ * @see ActivityLogger
  */
 class TelegramActivity extends Facade
 {

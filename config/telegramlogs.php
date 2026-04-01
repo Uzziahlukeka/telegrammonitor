@@ -1,5 +1,7 @@
 <?php
 
+use Uzhlaravel\Telegramlogs\Telegramlogs;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -230,7 +232,7 @@ return [
     'channels' => [
         'telegram' => [
             'driver' => 'custom',
-            'via' => \Uzhlaravel\Telegramlogs\Telegramlogs::class,
+            'via' => Telegramlogs::class,
             'level' => env('TELEGRAM_LOG_LEVEL', 'critical'),
             'ignore_empty_messages' => true,
         ],
