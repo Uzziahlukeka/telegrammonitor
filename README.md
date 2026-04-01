@@ -8,349 +8,409 @@
 
 ---
 
-A comprehensive Laravel package that seamlessly integrates Telegram notifications into your application's logging system.  
-Monitor critical events, debug issues, and stay informed about your application's health in real-time through Telegram channels or groups.
+A Laravel package that sends your application logs, exceptions, and model activity events directly to a Telegram channel or group — in real time.
 
-Supercharge your Laravel application monitoring with real-time Telegram messages from a form or external source.
+Supports **Laravel 10 → 13**, PHP 8.2+, and includes production-only mode so notifications stay silent during local development.
 
 ---
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-    - [Why Use Telegram Logs Monitor?](#why-use-telegram-logs-monitor)
-    - [why use telegram messages ?](#why-use-telegram-messages-)
-    - [Core Features](#core-features)
+- [Features](#features)
+- [Requirements](#requirements)
 - [Installation](#installation)
-    - [Prerequisites](#prerequisites)
-    - [Quick Installation](#quick-installation)
-    - [Automated Setup](#automated-setup)
-    - [Manual Installation](#manual-installation)
-    - [Log Channel Setup](#log-channel-setup)
-    - [Configuration](#configuration)
-        - [Environment Variables](#environment-variables)
-        - [Reference](#reference)
-- [Basic Usage](#basic-usage)
-    - [LOGS](#logs)
-    - [Standard Logging](#standard-logging)
-    - [Command Line Utilities](#command-line-utilities)
-    - [Output Formatting](#output-formatting)
-    - [Supported Log Levels](#supported-log-levels)
-    - [Direct Messaging Interface](#direct-messaging-interface)
+- [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+  - [Restrict to Production Only](#restrict-to-production-only)
+- [Usage](#usage)
+  - [Log Channel Integration](#log-channel-integration)
+  - [Direct Messaging](#direct-messaging)
+  - [Activity Log](#activity-log)
+    - [HasTelegramActivity Trait](#hastelegramactivity-trait)
+    - [TelegramActivity Facade](#telegramactivity-facade)
+- [Artisan Commands](#artisan-commands)
+- [Log Levels](#log-levels)
 - [Getting Telegram Credentials](#getting-telegram-credentials)
-    - [1. Create a Telegram Bot](#1-create-a-telegram-bot)
-    - [2. Get Chat ID](#2-get-chat-id)
-    - [3. Forum Topics (optional)](#3-forum-topics-optional)
-- [Security Best Practices](#security-best-practices)
+- [Security](#security)
 - [Contributing](#contributing)
-    - [Development Setup](#development-setup)
-- [Support](#support)
 - [License](#license)
-- [Attribution](#attribution)
 
 ---
 
-## Introduction
+## Features
 
-Telegram Logs Monitor is a comprehensive Laravel package that seamlessly integrates Telegram notifications into your application's logging system. Monitor critical events, debug issues, and stay informed about your application's health in real-time through Telegram channels.
-
-### Why Use Telegram Logs Monitor?
-
-- **Real-time Monitoring** → Instant delivery of critical notifications to your Telegram channels
-- **Comprehensive Coverage** → Support for all PSR-3 log levels from debug to emergency
-- **Smart Formatting** → Beautiful JSON formatting with MarkdownV2 and HTML support
-- **Error Resilience** → Graceful fallback when Telegram is unavailable
-- **Developer Friendly** → Interactive setup and comprehensive testing tools
-
-### why use telegram messages ?
-
-it is made to simplify life and handle receiving messages from a form or external source as form and view it into your telegram channel.
-
-- **Real-time Messaging** → Instant delivery of messages notifications to your Telegram channels
-- **Smart Formatting** → Beautiful text format with details on the source
-- **Error Resilience** → Graceful fallback when Telegram is unavailable
-
+- **Monolog integration** — drop-in `telegram` log channel; works with `LOG_CHANNEL=telegram` or as a stacked channel
+- **Direct messaging** — send arbitrary text to any chat from anywhere in your app
+- **Activity log** — track Eloquent model `created / updated / deleted` events and push them to Telegram (inspired by [spatie/laravel-activitylog](https://github.com/spatie/laravel-activitylog))
+- **Production-only mode** — restrict notifications to specific environments with a single env var
+- **Smart formatting** — emoji-labelled MarkdownV2 messages with context, exception details, and stack traces
+- **Long message splitting** — automatically splits messages that exceed Telegram's 4096-char limit
+- **Forum/topic support** — route messages to specific threads in a Telegram group
+- **Interactive install** — guided `telegramlogs:install` command
 
 ---
 
----
+## Requirements
 
-## Core Features
-
-### Essential Functionality
-- **Monolog Integration**
-- **Direct Messaging API**
-- **Real-time Notifications**
-- **Interactive Setup**
-- **Comprehensive Testing**
-
-### Advanced Capabilities
-- **Multi-level Logging**
-- **Forum Groups Support**
-- **Smart Message Handling**
-- **Performance Optimized**
-- **Error Resilience**
+| Dependency | Version |
+|------------|---------|
+| PHP | ^8.2 |
+| Laravel | ^10.0 \| ^11.0 \| ^12.0 \| ^13.0 |
 
 ---
 
 ## Installation
 
-### Prerequisites
-- **PHP**: 8.1 or higher
-- **Laravel**: 10.0 or higher
-- **Telegram Bot Token**: Obtain from [BotFather](https://core.telegram.org/bots#botfather)
-- **Telegram Channel/Group Chat ID**: Destination for log notifications
-
-### Quick Installation
-
-```php
+```bash
 composer require uzhlaravel/telegramlogs
 ```
 
-### Automated Setup
+Run the interactive setup wizard:
 
-```php
+```bash
 php artisan telegramlogs:install
 ```
 
-This guided process will:
-- Publish the configuration file
-- Help set up environment variables
-- Optionally configure Telegram as your default logging channel
-- Test your configuration
+The wizard will publish the config file, help you set environment variables, optionally enable activity log, and send a test message.
 
-### Manual Installation
+Or publish the config manually:
 
-```php
+```bash
 php artisan vendor:publish --tag="telegramlogs-config"
 ```
 
-### Log Channel Setup
-
-`.env` file:
-
-```php
-LOG_CHANNEL=telegram
-```
+---
 
 ## Configuration
 
 ### Environment Variables
 
-```php
+Add these to your `.env` file:
+
+```env
+# Required
 TELEGRAM_BOT_TOKEN=your_bot_token_here
 TELEGRAM_CHAT_ID=your_chat_id_here
-TELEGRAM_TOPIC_ID=your_thread_id_here
-TELEGRAM_TOPIC_MESSAGE_ID=your_message_id_here
-TELEGRAM_TIMEOUT=10
-TELEGRAM_LOG_LEVEL=critical
+
+# Optional
+TELEGRAM_LOG_LEVEL=critical          # minimum level to forward (default: critical)
+TELEGRAM_TOPIC_ID=                   # forum thread / topic ID
+TELEGRAM_TIMEOUT=10                  # Telegram API timeout in seconds
+
+# Environment control — see next section
+TELEGRAM_ENVIRONMENTS=production     # default: production only
+
+# Activity log
+TELEGRAM_ACTIVITY_LOG=false          # set true to enable model event tracking
+TELEGRAM_ACTIVITY_LOG_LEVEL=info     # log level for activity notifications
 ```
 
-### Reference
+### Full Reference
 
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| TELEGRAM_BOT_TOKEN | Bot API token | Yes | - |
-| TELEGRAM_CHAT_ID | Target chat/channel ID | Yes | - |
-| TELEGRAM_TOPIC_ID | Forum topic ID | No | null |
-| TELEGRAM_TOPIC_MESSAGE_ID | Forum thread ID | No | null |
-| TELEGRAM_LOG_LEVEL | Minimum log level | No | critical |
-| TELEGRAM_TIMEOUT | API timeout (seconds) | No | 10 |
-
----
-
-
-## Basic Usage
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `TELEGRAM_BOT_TOKEN` | Yes | — | Bot API token from @BotFather |
+| `TELEGRAM_CHAT_ID` | Yes | — | Target chat, channel, or group ID |
+| `TELEGRAM_TOPIC_ID` | No | `null` | Forum topic (thread) ID |
+| `TELEGRAM_TOPIC_MESSAGE_ID` | No | `null` | Forum thread message ID |
+| `TELEGRAM_LOG_LEVEL` | No | `critical` | Minimum PSR-3 level to send |
+| `TELEGRAM_TIMEOUT` | No | `10` | HTTP timeout in seconds |
+| `TELEGRAM_ENVIRONMENTS` | No | `production` | Comma-separated env list, or `*` |
+| `TELEGRAM_ACTIVITY_LOG` | No | `false` | Enable model activity tracking |
+| `TELEGRAM_ACTIVITY_LOG_LEVEL` | No | `info` | Log level for activity messages |
 
 ---
 
-### LOGS
+### Restrict to Production Only
+
+By default, notifications are only sent when `APP_ENV=production`. This prevents your local machine or CI from flooding your Telegram channel.
+
+```env
+# Only production (default)
+TELEGRAM_ENVIRONMENTS=production
+
+# Production and staging
+TELEGRAM_ENVIRONMENTS=production,staging
+
+# Every environment — useful for local debugging
+TELEGRAM_ENVIRONMENTS=*
+```
+
+The current environment and whether notifications are active are both shown in:
+
+```bash
+php artisan telegramlogs:test --config
+```
 
 ---
 
-### Standard Logging
+## Usage
+
+### Log Channel Integration
+
+Set Telegram as your default channel:
+
+```env
+LOG_CHANNEL=telegram
+```
+
+Or add it to a stack so critical logs go to both your file log and Telegram:
 
 ```php
-\Log::error('Payment processing failure detected');
+// config/logging.php
+'channels' => [
+    'stack' => [
+        'driver'   => 'stack',
+        'channels' => ['daily', 'telegram'],
+    ],
+],
+```
+
+Use it like any Laravel logger:
+
+```php
+use Illuminate\Support\Facades\Log;
+
+Log::error('Payment processing failure');
+
+Log::critical('Database unreachable', [
+    'connection' => 'mysql',
+    'host'       => config('database.connections.mysql.host'),
+]);
 
 try {
-    // Application code
+    // ...
 } catch (\Exception $e) {
-    \Log::critical('API connectivity issue', [
-        'exception' => $e->getMessage(),
-        'code' => $e->getCode()
-    ]);
+    Log::error('Unexpected exception', ['exception' => $e]);
 }
-
-\Log::debug('User authentication successful', [
-    'user_id' => auth()->id(),
-    'ip' => request()->ip()
-]);
 ```
 
-### Command Line Utilities
+Messages arrive in Telegram formatted like this:
 
-#### Configuration Validation
-
-```php
-php artisan telegramlogs:test
 ```
+❌ ERROR — MyApp [production]
 
-Options:
-- `--message="Custom notification"` → Dispatch custom test message
-- `--level=error` → Specify log severity level
-- `--list` → Display available log levels
-- `--config` → Show current configuration values
+Payment processing failure
 
-Example:
-
-```php
-php artisan telegramlogs:test --message="System health check" --level=warning
-```
-
-### Output Formatting
-
-```json
+Context:
 {
-  "message": "Database connection failure",
-  "level": "CRITICAL",
-  "datetime": "2025-08-17T11:55:13.885292+00:00",
-  "context": {
-    "exception": "PDOException: driver not found"
-  }
+  "connection": "mysql"
 }
+
+🕐 2025-08-19 14:32:01 UTC
 ```
 
 ---
 
-## Supported Log Levels
+### Direct Messaging
 
-| Level | Description | Example Use Case |
-|-------|-------------|------------------|
-| Debug | Detailed diagnostic info | Query debugging, variable inspection |
-| Info | General operational messages | User login, cache clearing |
-| Notice | Significant normal events | New user registration, order created |
-| Warning | Potential issues | API rate limiting, deprecated usage |
-| Error | Runtime errors | Payment failure, external API errors |
-| Critical | Critical condition alerts | Database connection failure |
-| Alert | Immediate action required | Security breach detection |
-| Emergency | System instability | Server down, infrastructure failure |
-
----
-
-## Command Line Tools
-
-- This is for testing and configuration purposes only.
-- You can use the facade to send messages to your Telegram channel.
-
-```php
-php artisan telegramlogs:test --config //to see the config
-php artisan telegramlogs:test --list // ot see the list of log levels
-php artisan telegramlogs:test --message="System health check" --level=warning // to send a custom message
-```
----
-## Direct Messaging Interface
-
----
-
-To send a message to your Telegram channel or from a form or just a simple word you want to pass , you have to use the facade for it but make sure to import it first.
+Send arbitrary messages to Telegram without going through the logger — useful for contact forms, webhooks, or manual alerts.
 
 ```php
 use Uzhlaravel\Telegramlogs\Facades\TelegramMessage;
-```
 
-then after this you can use the facade to send a message to your channel. like this : 
+// Simple text
+TelegramMessage::message('Scheduled backup completed.');
 
-```php
-
-use Uzhlaravel\Telegramlogs\Facades\TelegramMessage;
-
-// Basic message transmission
-TelegramMessage::message('System maintenance scheduled for tonight');
-
-// Message with options 
-TelegramMessage::send('System maintenance scheduled for tonight', [
-    'parse_mode' => 'HTML',
+// With Telegram API options
+TelegramMessage::send('Deployment finished', [
+    'parse_mode'               => 'HTML',
     'disable_web_page_preview' => true,
-    'reply_markup' => [
-        'inline_keyboard' => [
-            [
-                ['text' => 'Start', 'callback_data' => 'start']
-            ]
-        ]
-    ]
 ]);
 
-// Targeted chat messaging
-TelegramMessage::toChat('-100123456789', 'Specific channel notification');
+// Send to a different chat
+TelegramMessage::toChat('-100987654321', 'Alert for ops team');
 
-// Connection testing
+// Test connectivity
 TelegramMessage::test();
 
+// Get bot information
+TelegramMessage::getBotInfo();
 ```
+
+---
+
+### Activity Log
+
+Inspired by [spatie/laravel-activitylog](https://github.com/spatie/laravel-activitylog), the activity log tracks Eloquent model events and pushes a formatted notification to Telegram.
+
+Enable it in `.env`:
+
+```env
+TELEGRAM_ACTIVITY_LOG=true
+```
+
+#### HasTelegramActivity Trait
+
+Add the trait to any Eloquent model to automatically track its lifecycle events:
+
+```php
+use Uzhlaravel\Telegramlogs\Traits\HasTelegramActivity;
+
+class Post extends Model
+{
+    use HasTelegramActivity;
+}
+```
+
+On `created`, `updated`, or `deleted`, a message like the following is sent to Telegram:
+
+```
+🟢 Activity — MyApp [production]
+
+Created Post
+
+Subject: Post #42
+Properties:
+{
+  "attributes": { "title": "Hello World", "status": "draft" }
+}
+
+🕐 2025-08-19 14:32:01 UTC
+```
+
+**Customise per model:**
+
+```php
+use Uzhlaravel\Telegramlogs\Traits\HasTelegramActivity;
+
+class Order extends Model
+{
+    use HasTelegramActivity;
+
+    // Track only these events for this model
+    protected array $telegramActivityEvents = ['created', 'deleted'];
+
+    // Custom description
+    public function getTelegramActivityDescription(string $event): string
+    {
+        return ucfirst($event) . ' order #' . $this->id . ' — ' . $this->status;
+    }
+
+    // Extra properties to include
+    public function getTelegramActivityProperties(string $event): array
+    {
+        return ['total' => $this->total, 'customer' => $this->customer->name];
+    }
+}
+```
+
+Global event list is controlled in `config/telegramlogs.php`:
+
+```php
+'activity_log' => [
+    'events'             => ['created', 'updated', 'deleted'],
+    'include_old_values' => true,   // previous values on update
+    'include_new_values' => true,   // changed values on update
+],
+```
+
+#### TelegramActivity Facade
+
+For manual / one-off activity notifications, use the fluent facade:
+
+```php
+use Uzhlaravel\Telegramlogs\Facades\TelegramActivity;
+
+TelegramActivity::performedOn($post)
+    ->causedBy(auth()->user())
+    ->withProperty('plan', 'pro')
+    ->event('published')
+    ->dispatch('Post was published');
+
+// Simpler form
+TelegramActivity::log('Nightly cleanup job finished');
+```
+
+---
+
+## Artisan Commands
+
+```bash
+# Interactive setup
+php artisan telegramlogs:install
+
+# Send a test log message
+php artisan telegramlogs:test
+
+# Send with a custom message and level
+php artisan telegramlogs:test --message="Health check OK" --level=warning
+
+# Send a test activity notification
+php artisan telegramlogs:test --activity
+
+# Show current configuration (includes environment status)
+php artisan telegramlogs:test --config
+
+# List available log levels
+php artisan telegramlogs:test --list
+```
+
+---
+
+## Log Levels
+
+| Level | Emoji | Use Case |
+|-------|-------|----------|
+| `emergency` | 🚨 | System is unusable |
+| `alert` | 🔴 | Immediate action required |
+| `critical` | 💥 | Critical conditions |
+| `error` | ❌ | Runtime errors |
+| `warning` | ⚠️ | Potential issues |
+| `notice` | 📢 | Significant normal events |
+| `info` | ℹ️ | General operational messages |
+| `debug` | 🐛 | Detailed diagnostic information |
 
 ---
 
 ## Getting Telegram Credentials
 
-### 1. Create a Telegram Bot
-1. Open @BotFather
-2. Send `/newbot` and follow instructions
-3. Copy token → `TELEGRAM_BOT_TOKEN`
+### 1. Create a Bot
 
-### 2. Get Chat ID
-- **Private chats** → getUpdates API
-- **Channels** → Add bot as admin → `-100xxxxxxxxx`
-- **Groups** → Add bot, mention it → get `chat.id`
+1. Open [@BotFather](https://t.me/BotFather) in Telegram
+2. Send `/newbot` and follow the prompts
+3. Copy the token into `TELEGRAM_BOT_TOKEN`
+
+### 2. Get Your Chat ID
+
+- **Channel** — add the bot as an admin; the channel username (`@mychannel`) or numeric ID (`-100xxxxxxxxx`) works
+- **Group** — add the bot to the group; send a message, then call `https://api.telegram.org/bot<token>/getUpdates` to find `chat.id`
+- **Private chat** — start a chat with the bot, then use `getUpdates`
 
 ### 3. Forum Topics (optional)
-1. Create a topic
-2. Send message
-3. Get `message_thread_id`
+
+1. Enable Topics in your group settings
+2. Create a topic and send a message
+3. From `getUpdates`, copy `message_thread_id` → `TELEGRAM_TOPIC_ID`
 
 ---
 
-## Security Best Practices
+## Security
 
-- Never commit tokens
-- Restrict bot access
-- Store secrets in `.env`
-- Audit access regularly
+- Store `TELEGRAM_BOT_TOKEN` only in `.env` — never commit it
+- Restrict which commands the bot can receive (via BotFather → `/mybots → Bot Settings → Group Privacy`)
+- Audit who has access to your Telegram channel regularly
 
 ---
 
 ## Contributing
 
-1. Fork repo
-2. Create branch → `git checkout -b feature/amazing-feature`
-3. Commit → `git commit -m 'Add some amazing feature'`
-4. Push → `git push origin feature/amazing-feature`
-5. Open PR
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit your changes: `git commit -m 'Add my feature'`
+4. Push: `git push origin feature/my-feature`
+5. Open a pull request
 
-### Development Setup
+**Development commands:**
 
-```php 
-
+```bash
 git clone https://github.com/Uzziahlukeka/telegrammonitor.git
+cd telegrammonitor
 composer install
-composer analyze
-composer format
-composer test
-
+composer test        # run test suite
+composer analyse     # PHPStan static analysis
+composer format      # Laravel Pint code style
 ```
-
----
-
-## Support
-
-- Read docs + wiki
-- Open issues on GitHub
-- Join discussions
-
-If helpful, consider:
-- ⭐ Starring repo
--  Sharing experience
--  Reporting issues
 
 ---
 
@@ -359,12 +419,5 @@ If helpful, consider:
 This package is open-sourced software licensed under the [MIT License](LICENSE.md).
 
 ---
-
-## Attribution
-
-- Developed by [Uzziahlukeka](https://github.com/Uzziahlukeka)
-- Inspired by the Laravel community
-
---- 
 
 💖 Made with love by [Uzziah Lukeka](https://github.com/Uzziahlukeka)

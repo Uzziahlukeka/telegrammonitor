@@ -1,5 +1,7 @@
 <?php
 
+use Uzhlaravel\Telegramlogs\Telegramlogs;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -35,15 +37,30 @@ return [
     'topic_id' => env('TELEGRAM_TOPIC_ID', null),
 
     /*
-     |--------------------------------------------------------------------------
-     | Telegram Topic Message ID (Optional)
-     |--------------------------------------------------------------------------
-     |
-     | If you're using Telegram groups with topics/threads, you can specify
-     | the topic message ID here. Add this to your .env file as TELEGRAM_TOPIC_ID
-     |
-     */
+    |--------------------------------------------------------------------------
+    | Telegram Topic Message ID (Optional)
+    |--------------------------------------------------------------------------
+    |
+    | If you're using Telegram groups with topics/threads, you can specify
+    | the topic message ID here.
+    |
+    */
     'topic_message_id' => env('TELEGRAM_TOPIC_MESSAGE_ID', null),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Active Environments
+    |--------------------------------------------------------------------------
+    |
+    | Define which environments will actually send notifications to Telegram.
+    | Use '*' to enable in all environments, or a comma-separated list such as
+    | 'production' or 'production,staging'.
+    |
+    | Set TELEGRAM_ENVIRONMENTS=* in .env to enable everywhere (e.g. local dev).
+    | Default is 'production' so notifications are silent during development.
+    |
+    */
+    'environments' => env('TELEGRAM_ENVIRONMENTS', 'production'),
 
     /*
     |--------------------------------------------------------------------------
@@ -129,7 +146,79 @@ return [
         | Maximum length for each message before splitting occurs.
         |
         */
-        'max_length' => 4000,  // Slightly under 4096 for safety
+        'max_length' => 4000,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Activity Log
+    |--------------------------------------------------------------------------
+    |
+    | Inspired by spatie/laravel-activitylog, this section controls automatic
+    | Eloquent model activity tracking sent directly to your Telegram channel.
+    |
+    | Add the HasTelegramActivity trait to any model to opt-in:
+    |
+    |   use Uzhlaravel\Telegramlogs\Traits\HasTelegramActivity;
+    |
+    |   class Post extends Model {
+    |       use HasTelegramActivity;
+    |   }
+    |
+    */
+    'activity_log' => [
+        /*
+        |----------------------------------------------------------------------
+        | Enable Activity Log
+        |----------------------------------------------------------------------
+        |
+        | Master switch for the model activity tracking feature.
+        |
+        */
+        'enabled' => env('TELEGRAM_ACTIVITY_LOG', false),
+
+        /*
+        |----------------------------------------------------------------------
+        | Tracked Events
+        |----------------------------------------------------------------------
+        |
+        | Eloquent model events to track. Possible values:
+        | 'created', 'updated', 'deleted', 'restored', 'forceDeleted'
+        |
+        */
+        'events' => ['created', 'updated', 'deleted'],
+
+        /*
+        |----------------------------------------------------------------------
+        | Include Old Values on Update
+        |----------------------------------------------------------------------
+        |
+        | When true, the previous attribute values are included in the
+        | notification when a model is updated.
+        |
+        */
+        'include_old_values' => true,
+
+        /*
+        |----------------------------------------------------------------------
+        | Include New Values on Update
+        |----------------------------------------------------------------------
+        |
+        | When true, the new/changed attribute values are sent in the
+        | update notification.
+        |
+        */
+        'include_new_values' => true,
+
+        /*
+        |----------------------------------------------------------------------
+        | Log Level
+        |----------------------------------------------------------------------
+        |
+        | The log level used when sending activity notifications.
+        |
+        */
+        'log_level' => env('TELEGRAM_ACTIVITY_LOG_LEVEL', 'info'),
     ],
 
     /*
@@ -143,7 +232,7 @@ return [
     'channels' => [
         'telegram' => [
             'driver' => 'custom',
-            'via' => \Uzhlaravel\Telegramlogs\Telegramlogs::class,
+            'via' => Telegramlogs::class,
             'level' => env('TELEGRAM_LOG_LEVEL', 'critical'),
             'ignore_empty_messages' => true,
         ],
