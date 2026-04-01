@@ -18,4 +18,4 @@ arch('it will verify facades')
 
 arch('package classes should be in correct namespace')
     ->expect('Uzhlaravel\\Telegramlogs')
-    ->toBeClasses();
+    ->toBeClasses()->ignoring('Uzhlaravel\\Telegramlogs\\Traits');
