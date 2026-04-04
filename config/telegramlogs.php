@@ -22,6 +22,12 @@ return [
     | The chat ID where logs will be sent. For channels use @channelname,
     | for groups use the numeric ID (with negative sign for supergroups).
     |
+    | To find your chat ID: send a message to your bot, then open:
+    |   https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates
+    | and look for "chat":{"id": ...} in the response.
+    |
+    | NOTE: The bot must be added to the chat/group before it can send messages.
+    |
     */
     'chat_id' => env('TELEGRAM_CHAT_ID'),
 

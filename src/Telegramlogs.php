@@ -165,9 +165,9 @@ class Telegramlogs extends AbstractProcessingHandler
         foreach ($parts as $i => $part) {
             // Even indices are outside code blocks, odd are code blocks
             if ($i % 2 === 0) {
-                // Escape MarkdownV2 special chars outside code blocks
-                // but preserve * _ ` [ ] ( ) ~ > # + - = | { } . ! that we use for formatting
-                $result .= preg_replace('/(?<!\\\\)([.+\-=|{}!])/', '\\\\$1', $part);
+                // Escape all MarkdownV2 reserved chars outside code blocks.
+                // Intentionally preserve * _ ` for inline formatting.
+                $result .= preg_replace('/(?<!\\\\)([\[\]()\-~>#.+!\\\\=|{}])/', '\\\\$1', $part);
             } else {
                 $result .= $part;
             }
@@ -185,7 +185,7 @@ class Telegramlogs extends AbstractProcessingHandler
             foreach ($messages as $index => $partialMessage) {
                 $this->sendPartialMessage(
                     $url,
-                    sprintf("(%d/%d)\n%s", $index + 1, count($messages), $partialMessage)
+                    sprintf("\\(%d/%d\\)\n%s", $index + 1, count($messages), $partialMessage)
                 );
             }
         } else {
