@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs;
 
 use Illuminate\Database\Eloquent\Model;
@@ -21,17 +23,17 @@ use Throwable;
  *
  *   activity('deleted a comment')->dispatch();
  */
-class ActivityLogger
+final class ActivityLogger
 {
-    protected ?Model $subject = null;
+    private ?Model $subject = null;
 
-    protected mixed $causer = null;
+    private mixed $causer = null;
 
-    protected array $properties = [];
+    private array $properties = [];
 
-    protected ?string $event = null;
+    private ?string $event = null;
 
-    protected TelegramMessage $telegram;
+    private TelegramMessage $telegram;
 
     public function __construct(TelegramMessage $telegram)
     {
@@ -181,7 +183,7 @@ class ActivityLogger
     /**
      * Build the Telegram-formatted activity message.
      */
-    protected function buildMessage(string $description): string
+    private function buildMessage(string $description): string
     {
         $eventEmoji = $this->eventEmoji($this->event ?? '');
         $appName = config('app.name', 'Laravel');
@@ -226,7 +228,7 @@ class ActivityLogger
      * Escape special characters for Telegram MarkdownV2, leaving pre/code blocks intact.
      * Preserves * _ ` for inline formatting markers.
      */
-    protected function escapeMarkdownV2(string $text): string
+    private function escapeMarkdownV2(string $text): string
     {
         $parts = preg_split('/(```[\s\S]*?```|`[^`]*`)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
 
@@ -242,7 +244,7 @@ class ActivityLogger
         return $result;
     }
 
-    protected function eventEmoji(string $event): string
+    private function eventEmoji(string $event): string
     {
         return match ($event) {
             'created' => '🟢',

@@ -1,14 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs;
 
+use DateTimeInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use Monolog\LogRecord;
+use Throwable;
 
-class Telegramlogs extends AbstractProcessingHandler
+final class Telegramlogs extends AbstractProcessingHandler
 {
     protected string $botToken;
 
@@ -51,6 +55,25 @@ class Telegramlogs extends AbstractProcessingHandler
         $this->ignoreEmptyMessages = $ignoreEmptyMessages;
     }
 
+    public function __invoke(array $config): Logger
+    {
+        $logger = new Logger('telegram');
+
+        $handler = new self(
+            $config['level'] ?? config('telegramlogs.level', Logger::DEBUG),
+            $config['bubble'] ?? true,
+            null,
+            $config['ignore_empty_messages'] ?? true,
+            $config['timeout'] ?? null,
+            $config['split_long_messages'] ?? null,
+            $config['max_message_length'] ?? null
+        );
+
+        $logger->pushHandler($handler);
+
+        return $logger;
+    }
+
     /**
      * Check whether the current environment is in the allowed list.
      */
@@ -90,7 +113,7 @@ class Telegramlogs extends AbstractProcessingHandler
         $context = $record->context;
 
         $exception = $context['exception'] ?? null;
-        if ($exception instanceof \Throwable) {
+        if ($exception instanceof Throwable) {
             unset($context['exception']);
             $context['exception'] = [
                 'message' => $exception->getMessage(),
@@ -105,7 +128,7 @@ class Telegramlogs extends AbstractProcessingHandler
             'level' => $record->level->value,
             'level_name' => $record->level->getName(),
             'channel' => $record->channel,
-            'datetime' => $record->datetime->format(\DateTimeInterface::ATOM),
+            'datetime' => $record->datetime->format(DateTimeInterface::ATOM),
             'extra' => $record->extra,
             'location' => [
                 'app' => config('app.name', 'Laravel'),
@@ -122,7 +145,7 @@ class Telegramlogs extends AbstractProcessingHandler
 
         $lines = [$header];
 
-        if ($exception instanceof \Throwable) {
+        if ($exception instanceof Throwable) {
             $lines[] = "📍 `{$exception->getFile()}:{$exception->getLine()}`";
         }
 
@@ -136,7 +159,7 @@ class Telegramlogs extends AbstractProcessingHandler
      */
     protected function levelEmoji(string $level): string
     {
-        return match (strtolower($level)) {
+        return match (mb_strtolower($level)) {
             'emergency' => '🚨',
             'alert' => '🔴',
             'critical' => '💥',
@@ -176,8 +199,8 @@ class Telegramlogs extends AbstractProcessingHandler
     {
         $url = "/bot{$this->botToken}/sendMessage";
 
-        if ($this->splitLongMessages && strlen($message) > $this->maxMessageLength) {
-            $messages = str_split($message, $this->maxMessageLength - 100);
+        if ($this->splitLongMessages && mb_strlen($message) > $this->maxMessageLength) {
+            $messages = mb_str_split($message, $this->maxMessageLength - 100);
             foreach ($messages as $index => $partialMessage) {
                 $this->sendPartialMessage(
                     $url,
@@ -206,24 +229,5 @@ class Telegramlogs extends AbstractProcessingHandler
             'json' => $payload,
             'timeout' => $this->timeout,
         ]);
-    }
-
-    public function __invoke(array $config): Logger
-    {
-        $logger = new Logger('telegram');
-
-        $handler = new self(
-            $config['level'] ?? config('telegramlogs.level', Logger::DEBUG),
-            $config['bubble'] ?? true,
-            null,
-            $config['ignore_empty_messages'] ?? true,
-            $config['timeout'] ?? null,
-            $config['split_long_messages'] ?? null,
-            $config['max_message_length'] ?? null
-        );
-
-        $logger->pushHandler($handler);
-
-        return $logger;
     }
 }

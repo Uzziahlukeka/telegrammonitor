@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs\Traits;
 
 use Uzhlaravel\Telegramlogs\ActivityLogger;
@@ -47,6 +49,24 @@ trait HasTelegramActivity
     }
 
     /**
+     * Customise the activity description. Override in your model.
+     */
+    public function getTelegramActivityDescription(string $event): string
+    {
+        return ucfirst($event).' '.class_basename($this);
+    }
+
+    /**
+     * Attach extra properties. Override in your model.
+     *
+     * @return array<string, mixed>
+     */
+    public function getTelegramActivityProperties(string $event): array
+    {
+        return [];
+    }
+
+    /**
      * Determine which events to track for this model.
      * Model-level $telegramActivityEvents takes precedence over global config.
      */
@@ -68,23 +88,5 @@ trait HasTelegramActivity
         /** @var ActivityLogger $logger */
         $logger = app(ActivityLogger::class);
         $logger->logModelEvent($this, $event);
-    }
-
-    /**
-     * Customise the activity description. Override in your model.
-     */
-    public function getTelegramActivityDescription(string $event): string
-    {
-        return ucfirst($event).' '.class_basename($this);
-    }
-
-    /**
-     * Attach extra properties. Override in your model.
-     *
-     * @return array<string, mixed>
-     */
-    public function getTelegramActivityProperties(string $event): array
-    {
-        return [];
     }
 }

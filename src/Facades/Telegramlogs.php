@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs\Facades;
 
 use Illuminate\Log\LogManager;
@@ -18,11 +20,14 @@ use Illuminate\Support\Facades\Facade;
  *
  * @see LogManager
  */
-class Telegramlogs extends Facade
+final class Telegramlogs extends Facade
 {
-    protected static function getFacadeAccessor(): string
+    /**
+     * Override the __callStatic to route calls to telegram channel
+     */
+    public static function __callStatic($method, $args)
     {
-        return 'log';
+        return self::channel()->$method(...$args);
     }
 
     /**
@@ -30,14 +35,11 @@ class Telegramlogs extends Facade
      */
     public static function channel()
     {
-        return static::getFacadeRoot()->channel('telegram');
+        return self::getFacadeRoot()->channel('telegram');
     }
 
-    /**
-     * Override the __callStatic to route calls to telegram channel
-     */
-    public static function __callStatic($method, $args)
+    protected static function getFacadeAccessor(): string
     {
-        return static::channel()->$method(...$args);
+        return 'log';
     }
 }

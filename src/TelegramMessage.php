@@ -1,24 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs;
 
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 
-class TelegramMessage
+final class TelegramMessage
 {
-    protected string $botToken;
+    private string $botToken;
 
-    protected string $chatId;
+    private string $chatId;
 
-    protected ?string $topicId;
+    private ?string $topicId;
 
-    protected Client $client;
+    private Client $client;
 
-    protected int $timeout;
+    private int $timeout;
 
-    protected ?string $parseMode;
+    private ?string $parseMode;
 
     public function __construct()
     {
@@ -120,7 +123,7 @@ class TelegramMessage
             );
 
             return json_decode($response->getBody()->getContents(), true);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('TelegramMessage: failed to get bot info: '.$e->getMessage());
 
             return false;
@@ -130,7 +133,7 @@ class TelegramMessage
     /**
      * Internal send implementation.
      */
-    protected function sendMessage(string $text, array $options = []): array|bool
+    private function sendMessage(string $text, array $options = []): array|bool
     {
         try {
             $appName = config('app.name', 'Laravel');
@@ -158,7 +161,7 @@ class TelegramMessage
             Log::error('TelegramMessage: API request failed: '.$e->getMessage());
 
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('TelegramMessage: unexpected error: '.$e->getMessage());
 
             return false;

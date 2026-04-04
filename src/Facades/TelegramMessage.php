@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
-class TelegramMessage extends Facade
+final class TelegramMessage extends Facade
 {
     /**
      * @method static array|bool message(string $text)

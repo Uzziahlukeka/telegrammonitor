@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs\Commands;
 
 use Illuminate\Console\Command;
 
-class InstallTelegramLogsCommand extends Command
+final class InstallTelegramLogsCommand extends Command
 {
     protected $signature = 'telegramlogs:install';
 
