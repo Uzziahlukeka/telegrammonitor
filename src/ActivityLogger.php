@@ -111,7 +111,16 @@ class ActivityLogger
 
         // Also pipe through the Laravel logger at the configured level so the
         // activity shows up in log files / other channels as well.
-        logger()->log($level, "[TelegramActivity] {$description}", $this->properties);
+        // Avoid re-triggering the telegram channel to prevent double-sends and
+        // "chat not found" errors when the default log stack includes telegram.
+        $defaultChannel = config('logging.default', 'stack');
+        if ($defaultChannel !== 'telegram') {
+            try {
+                logger()->channel($defaultChannel)->log($level, "[TelegramActivity] {$description}", $this->properties);
+            } catch (\Throwable $e) {
+                // Secondary logging failure should not affect activity dispatch result
+            }
+        }
 
         return $result !== false;
     }
@@ -207,9 +216,29 @@ class ActivityLogger
         }
 
         $lines[] = '';
-        $lines[] = '🕐 '.now()->format('Y-m-d H:i:s T');
+        $lines[] = '🕐 `'.now()->format('Y-m-d H:i:s T').'`';
 
-        return implode("\n", $lines);
+        return $this->escapeMarkdownV2(implode("\n", $lines));
+    }
+
+    /**
+     * Escape special characters for Telegram MarkdownV2, leaving pre/code blocks intact.
+     * Preserves * _ ` for inline formatting markers.
+     */
+    private function escapeMarkdownV2(string $text): string
+    {
+        $parts = preg_split('/(```[\s\S]*?```|`[^`]*`)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+        $result = '';
+        foreach ($parts as $i => $part) {
+            if ($i % 2 === 0) {
+                $result .= preg_replace('/(?<!\\\\)([\[\]()\-~>#.+!\\\\=|{}])/', '\\\\$1', $part);
+            } else {
+                $result .= $part;
+            }
+        }
+
+        return $result;
     }
 
     protected function eventEmoji(string $event): string
