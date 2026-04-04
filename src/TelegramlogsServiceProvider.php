@@ -24,7 +24,6 @@ class TelegramlogsServiceProvider extends ServiceProvider
             return new TelegramMessage;
         });
 
-        // ActivityLogger — model event notifications
         $this->app->singleton(ActivityLogger::class, function ($app) {
             return new ActivityLogger($app->make(TelegramMessage::class));
         });

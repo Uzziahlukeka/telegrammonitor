@@ -3,6 +3,7 @@
 namespace Uzhlaravel\Telegramlogs;
 
 use Illuminate\Database\Eloquent\Model;
+use Throwable;
 
 /**
  * Activity logger inspired by spatie/laravel-activitylog.
@@ -116,8 +117,8 @@ class ActivityLogger
         $defaultChannel = config('logging.default', 'stack');
         if ($defaultChannel !== 'telegram') {
             try {
-                logger()->channel($defaultChannel)->log($level, "[TelegramActivity] {$description}", $this->properties);
-            } catch (\Throwable $e) {
+                logger()->channel($defaultChannel)->log($level, "[TelegramActivity] .$description.", $this->properties);
+            } catch (Throwable $e) {
                 // Secondary logging failure should not affect activity dispatch result
             }
         }
@@ -187,7 +188,7 @@ class ActivityLogger
         $env = app()->environment();
 
         $lines = [
-            "{$eventEmoji} *Activity* — {$appName} `[{$env}]`",
+            ".$eventEmoji. *Activity* — .$appName. `[.$env.]`",
         ];
 
         if ($description !== '') {
@@ -225,7 +226,7 @@ class ActivityLogger
      * Escape special characters for Telegram MarkdownV2, leaving pre/code blocks intact.
      * Preserves * _ ` for inline formatting markers.
      */
-    private function escapeMarkdownV2(string $text): string
+    protected function escapeMarkdownV2(string $text): string
     {
         $parts = preg_split('/(```[\s\S]*?```|`[^`]*`)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
 

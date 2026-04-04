@@ -133,9 +133,11 @@ class TelegramMessage
     protected function sendMessage(string $text, array $options = []): array|bool
     {
         try {
+            $appName = config('app.name', 'Laravel');
+            $header = "App: .$appName. \n\n";
             $payload = array_merge([
                 'chat_id' => $this->chatId,
-                'text' => $text,
+                'text' => $header.$text,
             ], $options);
 
             if ($this->topicId) {
