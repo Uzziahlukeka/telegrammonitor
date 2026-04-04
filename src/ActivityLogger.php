@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs;
 
 use Illuminate\Database\Eloquent\Model;
+use Throwable;
 
 /**
  * Activity logger inspired by spatie/laravel-activitylog.
@@ -20,17 +23,17 @@ use Illuminate\Database\Eloquent\Model;
  *
  *   activity('deleted a comment')->dispatch();
  */
-class ActivityLogger
+final class ActivityLogger
 {
-    protected ?Model $subject = null;
+    private ?Model $subject = null;
 
-    protected mixed $causer = null;
+    private mixed $causer = null;
 
-    protected array $properties = [];
+    private array $properties = [];
 
-    protected ?string $event = null;
+    private ?string $event = null;
 
-    protected TelegramMessage $telegram;
+    private TelegramMessage $telegram;
 
     public function __construct(TelegramMessage $telegram)
     {
@@ -116,8 +119,8 @@ class ActivityLogger
         $defaultChannel = config('logging.default', 'stack');
         if ($defaultChannel !== 'telegram') {
             try {
-                logger()->channel($defaultChannel)->log($level, "[TelegramActivity] {$description}", $this->properties);
-            } catch (\Throwable $e) {
+                logger()->channel($defaultChannel)->log($level, "[TelegramActivity] .$description.", $this->properties);
+            } catch (Throwable $e) {
                 // Secondary logging failure should not affect activity dispatch result
             }
         }
@@ -180,14 +183,14 @@ class ActivityLogger
     /**
      * Build the Telegram-formatted activity message.
      */
-    protected function buildMessage(string $description): string
+    private function buildMessage(string $description): string
     {
         $eventEmoji = $this->eventEmoji($this->event ?? '');
         $appName = config('app.name', 'Laravel');
         $env = app()->environment();
 
         $lines = [
-            "{$eventEmoji} *Activity* — {$appName} `[{$env}]`",
+            ".$eventEmoji. *Activity* — .$appName. `[.$env.]`",
         ];
 
         if ($description !== '') {
@@ -241,7 +244,7 @@ class ActivityLogger
         return $result;
     }
 
-    protected function eventEmoji(string $event): string
+    private function eventEmoji(string $event): string
     {
         return match ($event) {
             'created' => '🟢',
