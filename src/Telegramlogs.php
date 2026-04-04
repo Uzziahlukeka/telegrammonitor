@@ -1,14 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs;
 
+use DateTimeInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use Monolog\LogRecord;
+use Throwable;
 
-class Telegramlogs extends AbstractProcessingHandler
+final class Telegramlogs extends AbstractProcessingHandler
 {
     protected string $botToken;
 
@@ -51,6 +55,25 @@ class Telegramlogs extends AbstractProcessingHandler
         $this->ignoreEmptyMessages = $ignoreEmptyMessages;
     }
 
+    public function __invoke(array $config): Logger
+    {
+        $logger = new Logger('telegram');
+
+        $handler = new self(
+            $config['level'] ?? config('telegramlogs.level', Logger::DEBUG),
+            $config['bubble'] ?? true,
+            null,
+            $config['ignore_empty_messages'] ?? true,
+            $config['timeout'] ?? null,
+            $config['split_long_messages'] ?? null,
+            $config['max_message_length'] ?? null
+        );
+
+        $logger->pushHandler($handler);
+
+        return $logger;
+    }
+
     /**
      * Check whether the current environment is in the allowed list.
      */
@@ -85,54 +108,50 @@ class Telegramlogs extends AbstractProcessingHandler
         }
     }
 
-    /**
-     * Format the log record into a human-readable message for Telegram.
-     */
     protected function formatRecord(LogRecord $record): string
     {
-        $includeContext = config('telegramlogs.formatting.include_context', true);
-        $includeTrace = config('telegramlogs.formatting.include_stack_trace', true);
-
-        $levelEmoji = $this->levelEmoji($record->level->getName());
-        $env = app()->environment();
-        $appName = config('app.name', 'Laravel');
-
-        $lines = [
-            "{$levelEmoji} *{$record->level->getName()}* — {$appName} `[{$env}]`",
-            '',
-            $record->message,
-        ];
-
         $context = $record->context;
 
-        // Extract exception separately for stack trace
         $exception = $context['exception'] ?? null;
-        if ($exception instanceof \Throwable) {
+        if ($exception instanceof Throwable) {
             unset($context['exception']);
-            $lines[] = '';
+            $context['exception'] = [
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile().':'.$exception->getLine(),
+                'trace' => array_slice(explode("\n", $exception->getTraceAsString()), 0, 8),
+            ];
+        }
+
+        $payload = [
+            'message' => $record->message,
+            'context' => $context,
+            'level' => $record->level->value,
+            'level_name' => $record->level->getName(),
+            'channel' => $record->channel,
+            'datetime' => $record->datetime->format(DateTimeInterface::ATOM),
+            'extra' => $record->extra,
+            'location' => [
+                'app' => config('app.name', 'Laravel'),
+                'environment' => app()->environment(),
+                'url' => request()->fullUrl(),
+                'ip' => request()->ip(),
+            ],
+        ];
+
+        $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+        $levelEmoji = $this->levelEmoji($record->level->getName());
+        $header = "{$levelEmoji} *{$record->level->getName()}*";
+
+        $lines = [$header];
+
+        if ($exception instanceof Throwable) {
             $lines[] = "📍 `{$exception->getFile()}:{$exception->getLine()}`";
-            $lines[] = '`'.$exception->getMessage().'`';
-            if ($includeTrace) {
-                $trace = array_slice(explode("\n", $exception->getTraceAsString()), 0, 8);
-                $lines[] = '';
-                $lines[] = '```';
-                $lines[] = implode("\n", $trace);
-                $lines[] = '```';
-            }
         }
 
-        if ($includeContext && ! empty($context)) {
-            $lines[] = '';
-            $lines[] = '*Context:*';
-            $lines[] = '```json';
-            $lines[] = json_encode($context, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            $lines[] = '```';
-        }
+        $lines[] = "```json\n{$json}\n```";
 
-        $lines[] = '';
-        $lines[] = '🕐 `'.$record->datetime->format('Y-m-d H:i:s T').'`';
-
-        return $this->escapeMarkdownV2(implode("\n", $lines));
+        return implode("\n", $lines);
     }
 
     /**
@@ -140,7 +159,7 @@ class Telegramlogs extends AbstractProcessingHandler
      */
     protected function levelEmoji(string $level): string
     {
-        return match (strtolower($level)) {
+        return match (mb_strtolower($level)) {
             'emergency' => '🚨',
             'alert' => '🔴',
             'critical' => '💥',
@@ -180,8 +199,8 @@ class Telegramlogs extends AbstractProcessingHandler
     {
         $url = "/bot{$this->botToken}/sendMessage";
 
-        if ($this->splitLongMessages && strlen($message) > $this->maxMessageLength) {
-            $messages = str_split($message, $this->maxMessageLength - 100);
+        if ($this->splitLongMessages && mb_strlen($message) > $this->maxMessageLength) {
+            $messages = mb_str_split($message, $this->maxMessageLength - 100);
             foreach ($messages as $index => $partialMessage) {
                 $this->sendPartialMessage(
                     $url,
@@ -210,25 +229,5 @@ class Telegramlogs extends AbstractProcessingHandler
             'json' => $payload,
             'timeout' => $this->timeout,
         ]);
-    }
-
-    // Required for Laravel's custom logging driver
-    public function __invoke(array $config): Logger
-    {
-        $logger = new Logger('telegram');
-
-        $handler = new self(
-            $config['level'] ?? config('telegramlogs.level', Logger::DEBUG),
-            $config['bubble'] ?? true,
-            null,
-            $config['ignore_empty_messages'] ?? true,
-            $config['timeout'] ?? null,
-            $config['split_long_messages'] ?? null,
-            $config['max_message_length'] ?? null
-        );
-
-        $logger->pushHandler($handler);
-
-        return $logger;
     }
 }

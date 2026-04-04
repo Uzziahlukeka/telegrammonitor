@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs;
 
 use Illuminate\Support\ServiceProvider;
 use Uzhlaravel\Telegramlogs\Commands\InstallTelegramLogsCommand;
 use Uzhlaravel\Telegramlogs\Commands\TelegramlogsCommand;
 
-class TelegramlogsServiceProvider extends ServiceProvider
+final class TelegramlogsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
@@ -24,7 +26,6 @@ class TelegramlogsServiceProvider extends ServiceProvider
             return new TelegramMessage;
         });
 
-        // ActivityLogger — model event notifications
         $this->app->singleton(ActivityLogger::class, function ($app) {
             return new ActivityLogger($app->make(TelegramMessage::class));
         });

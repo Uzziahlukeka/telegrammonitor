@@ -8,7 +8,14 @@
         "telegram monitor",
         "telegram",
         "direct message",
-        "logs"
+        "logs",
+        "monitoring",
+        "notifications",
+        "critical events",
+        "realtime",
+        "markdown",
+        "threaded discussions",
+        "Activity logs"
     ],
     "homepage": "https://github.com/Uzziahlukeka/telegrammonitor",
     "license": "MIT",

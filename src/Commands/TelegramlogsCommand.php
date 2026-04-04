@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Uzhlaravel\Telegramlogs\Commands;
 
+use Exception;
 use Illuminate\Console\Command;
 use Uzhlaravel\Telegramlogs\Facades\TelegramActivity;
 use Uzhlaravel\Telegramlogs\Facades\Telegramlogs;
 use Uzhlaravel\Telegramlogs\TelegramMessage;
 
-class TelegramlogsCommand extends Command
+final class TelegramlogsCommand extends Command
 {
     protected $signature = 'telegramlogs:test
                             {--message= : Custom test message to send}
@@ -69,7 +72,7 @@ class TelegramlogsCommand extends Command
         $this->table(
             ['Setting', 'Value'],
             [
-                ['Bot Token', $token ? '****'.substr($token, -4) : 'Not set'],
+                ['Bot Token', $token ? '****'.mb_substr($token, -4) : 'Not set'],
                 ['Chat ID', config('telegramlogs.chat_id') ?? 'Not set'],
                 ['Topic ID', config('telegramlogs.topic_id') ?? 'Not set'],
                 ['Log Level', config('telegramlogs.level', 'critical')],
@@ -87,7 +90,7 @@ class TelegramlogsCommand extends Command
     protected function sendTestMessage(): int
     {
         $message = $this->option('message') ?? 'This is a test message from Telegramlogs command';
-        $level = strtolower($this->option('level') ?? 'info');
+        $level = mb_strtolower($this->option('level') ?? 'info');
 
         if (! in_array($level, $this->logLevels)) {
             $this->error("Invalid log level: {$level}");
@@ -123,7 +126,7 @@ class TelegramlogsCommand extends Command
             $this->info('Message sent successfully!');
 
             return self::SUCCESS;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->newLine();
             $this->error('Failed to send message: '.$e->getMessage());
 
