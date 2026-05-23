@@ -141,15 +141,17 @@ final class Telegramlogs extends AbstractProcessingHandler
         $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
         $levelEmoji = $this->levelEmoji($record->level->getName());
-        $header = "{$levelEmoji} *{$record->level->getName()}*";
+        $levelName = $this->escapeMarkdownV2($record->level->getName());
+        $header = "$levelEmoji *$levelName*";
 
         $lines = [$header];
 
         if ($exception instanceof Throwable) {
-            $lines[] = "📍 `{$exception->getFile()}:{$exception->getLine()}`";
+            $filePath = $this->escapeMarkdownV2($exception->getFile().':'.$exception->getLine());
+            $lines[] = "📍 `$filePath`";
         }
 
-        $lines[] = "```json\n{$json}\n```";
+        $lines[] = "```json\n$json\n```";
 
         return implode("\n", $lines);
     }
@@ -177,15 +179,11 @@ final class Telegramlogs extends AbstractProcessingHandler
      */
     protected function escapeMarkdownV2(string $text): string
     {
-        // Split on code blocks so we only escape outside them
         $parts = preg_split('/(```[\s\S]*?```|`[^`]*`)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
 
         $result = '';
         foreach ($parts as $i => $part) {
-            // Even indices are outside code blocks, odd are code blocks
             if ($i % 2 === 0) {
-                // Escape all MarkdownV2 reserved chars outside code blocks.
-                // Intentionally preserve * _ ` for inline formatting.
                 $result .= preg_replace('/(?<!\\\\)([\[\]()\-~>#.+!\\\\=|{}])/', '\\\\$1', $part);
             } else {
                 $result .= $part;
@@ -197,7 +195,7 @@ final class Telegramlogs extends AbstractProcessingHandler
 
     protected function sendMessage(string $message): void
     {
-        $url = "/bot{$this->botToken}/sendMessage";
+        $url = "/bot$this->botToken/sendMessage";
 
         if ($this->splitLongMessages && mb_strlen($message) > $this->maxMessageLength) {
             $messages = mb_str_split($message, $this->maxMessageLength - 100);
