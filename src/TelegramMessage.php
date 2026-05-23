@@ -101,6 +101,35 @@ final class TelegramMessage
         return $result;
     }
 
+    public function toTopic(string $topicId, string $text, array $options = []): array|bool
+    {
+        if (! $this->isActiveInCurrentEnvironment()) {
+            return false;
+        }
+
+        $originalTopicId = $this->topicId;
+        $this->topicId = $topicId;
+
+        $result = $this->sendMessage($text, $options);
+
+        $this->topicId = $originalTopicId;
+
+        return $result;
+    }
+
+    public function toChatAndTopic(string $chatId, string $topicId, string $text, array $options = []): array|bool
+    {
+        if (! $this->isActiveInCurrentEnvironment()) {
+            return false;
+        }
+
+        [$this->chatId, $this->topicId] = [$chatId, $topicId];
+        $result = $this->sendMessage($text, $options);
+        [$this->chatId, $this->topicId] = [config('telegramlogs.chat_id', ''), config('telegramlogs.topic_message_id')];
+
+        return $result;
+    }
+
     /**
      * Test the connection by sending a test message.
      */

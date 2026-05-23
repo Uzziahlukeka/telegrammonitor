@@ -43,7 +43,7 @@ final class ActivityLogger
     /**
      * Set the model the activity is performed on.
      */
-    public function performedOn(Model $model): static
+    public function performedOn(Model $model): ActivityLogger
     {
         $clone = clone $this;
         $clone->subject = $model;
@@ -55,7 +55,7 @@ final class ActivityLogger
      * Set who/what caused the activity.
      * Accepts a Model (e.g. User) or any scalar identifier.
      */
-    public function causedBy(mixed $causer): static
+    public function causedBy(mixed $causer): ActivityLogger
     {
         $clone = clone $this;
         $clone->causer = $causer;
@@ -66,7 +66,7 @@ final class ActivityLogger
     /**
      * Attach extra properties to the activity notification.
      */
-    public function withProperties(array $properties): static
+    public function withProperties(array $properties): ActivityLogger
     {
         $clone = clone $this;
         $clone->properties = array_merge($clone->properties, $properties);
@@ -74,18 +74,12 @@ final class ActivityLogger
         return $clone;
     }
 
-    /**
-     * Attach a single extra property.
-     */
-    public function withProperty(string $key, mixed $value): static
+    public function withProperty(string $key, mixed $value): ActivityLogger
     {
         return $this->withProperties([$key => $value]);
     }
 
-    /**
-     * Set a short event tag (e.g. 'created', 'published').
-     */
-    public function event(string $event): static
+    public function event(string $event): ActivityLogger
     {
         $clone = clone $this;
         $clone->event = $event;
@@ -93,10 +87,6 @@ final class ActivityLogger
         return $clone;
     }
 
-    /**
-     * Dispatch the activity notification with the given description.
-     * Returns false when the feature is disabled or the environment is inactive.
-     */
     public function dispatch(string $description = ''): bool
     {
         if (! config('telegramlogs.activity_log.enabled', false)) {
@@ -108,31 +98,22 @@ final class ActivityLogger
         }
 
         $text = $this->buildMessage($description);
-        $level = config('telegramlogs.activity_log.log_level', 'info');
 
         $result = $this->telegram->send($text);
-
-        // Also pipe through the Laravel logger at the configured level so the
-        // activity shows up in log files / other channels as well.
-        // Avoid re-triggering the telegram channel to prevent double-sends and
-        // "chat not found" errors when the default log stack includes telegram.
         $defaultChannel = config('logging.default', 'stack');
+        $level = config('telegramlogs.activity_log.log_level', 'info');
+
         if ($defaultChannel !== 'telegram') {
             try {
-                logger()->channel($defaultChannel)->log($level, "[TelegramActivity] .$description.", $this->properties);
-            } catch (Throwable $e) {
-                // Secondary logging failure should not affect activity dispatch result
+                logger()->channel($defaultChannel)->log($level, '[TelegramActivity] '.$description, $this->properties);
+            } catch (Throwable) {
+
             }
         }
 
         return $result !== false;
     }
 
-    /**
-     * Shorthand: log a plain description without a fluent chain.
-     *
-     *   ActivityLogger::record('Something happened');
-     */
     public function log(string $description): bool
     {
         return $this->dispatch($description);
@@ -164,7 +145,6 @@ final class ActivityLogger
             $properties['attributes'] = $model->getAttributes();
         }
 
-        // Allow the model to override description / properties
         $description = method_exists($model, 'getTelegramActivityDescription')
             ? $model->getTelegramActivityDescription($event)
             : ucfirst($event).' '.class_basename($model);
@@ -179,55 +159,53 @@ final class ActivityLogger
             ->withProperties(array_merge($properties, $extraProps))
             ->dispatch($description);
     }
-
-    /**
-     * Build the Telegram-formatted activity message.
-     */
     private function buildMessage(string $description): string
     {
         $eventEmoji = $this->eventEmoji($this->event ?? '');
-        $appName = config('app.name', 'Laravel');
-        $env = app()->environment();
+        $appName    = $this->escapeMarkdownV2(config('app.name', 'Laravel'));
+        $env        = $this->escapeMarkdownV2(app()->environment());
 
         $lines = [
-            ".$eventEmoji. *Activity* — .$appName. `[.$env.]`",
+            "$eventEmoji *Activity* — $appName `[$env]`",
         ];
 
         if ($description !== '') {
             $lines[] = '';
-            $lines[] = $description;
+            $lines[] = $this->escapeMarkdownV2($description);
         }
 
         if ($this->subject) {
+            $subjectLabel = $this->escapeMarkdownV2(
+                class_basename($this->subject).' #'.$this->subject->getKey()
+            );
             $lines[] = '';
-            $lines[] = '*Subject:* '.class_basename($this->subject).' #'.$this->subject->getKey();
+            $lines[] = "*Subject:* $subjectLabel";
         }
 
         if ($this->causer !== null) {
             $causerLabel = $this->causer instanceof Model
                 ? class_basename($this->causer).' #'.$this->causer->getKey()
                 : (string) $this->causer;
-            $lines[] = '*By:* '.$causerLabel;
+
+            $lines[] = '*By:* '.$this->escapeMarkdownV2($causerLabel);
         }
 
         if (! empty($this->properties)) {
+            $json = json_encode(
+                $this->properties,
+                JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
+            );
             $lines[] = '';
             $lines[] = '*Properties:*';
-            $lines[] = '```json';
-            $lines[] = json_encode($this->properties, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            $lines[] = '```';
+            $lines[] = "```json\n$json\n```";
         }
 
         $lines[] = '';
         $lines[] = '🕐 `'.now()->format('Y-m-d H:i:s T').'`';
 
-        return $this->escapeMarkdownV2(implode("\n", $lines));
+        return implode("\n", $lines);
     }
 
-    /**
-     * Escape special characters for Telegram MarkdownV2, leaving pre/code blocks intact.
-     * Preserves * _ ` for inline formatting markers.
-     */
     private function escapeMarkdownV2(string $text): string
     {
         $parts = preg_split('/(```[\s\S]*?```|`[^`]*`)/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -247,12 +225,12 @@ final class ActivityLogger
     private function eventEmoji(string $event): string
     {
         return match ($event) {
-            'created' => '🟢',
-            'updated' => '🔵',
-            'deleted' => '🔴',
-            'restored' => '♻️',
+            'created'      => '🟢',
+            'updated'      => '🔵',
+            'deleted'      => '🔴',
+            'restored'     => '♻️',
             'forceDeleted' => '💣',
-            default => '📋',
+            default        => '📋',
         };
     }
 }
