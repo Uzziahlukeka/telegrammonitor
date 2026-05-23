@@ -43,7 +43,7 @@ final class ActivityLogger
     /**
      * Set the model the activity is performed on.
      */
-    public function performedOn(Model $model): ActivityLogger
+    public function performedOn(Model $model): self
     {
         $clone = clone $this;
         $clone->subject = $model;
@@ -55,7 +55,7 @@ final class ActivityLogger
      * Set who/what caused the activity.
      * Accepts a Model (e.g. User) or any scalar identifier.
      */
-    public function causedBy(mixed $causer): ActivityLogger
+    public function causedBy(mixed $causer): self
     {
         $clone = clone $this;
         $clone->causer = $causer;
@@ -66,7 +66,7 @@ final class ActivityLogger
     /**
      * Attach extra properties to the activity notification.
      */
-    public function withProperties(array $properties): ActivityLogger
+    public function withProperties(array $properties): self
     {
         $clone = clone $this;
         $clone->properties = array_merge($clone->properties, $properties);
@@ -74,12 +74,12 @@ final class ActivityLogger
         return $clone;
     }
 
-    public function withProperty(string $key, mixed $value): ActivityLogger
+    public function withProperty(string $key, mixed $value): self
     {
         return $this->withProperties([$key => $value]);
     }
 
-    public function event(string $event): ActivityLogger
+    public function event(string $event): self
     {
         $clone = clone $this;
         $clone->event = $event;
@@ -159,11 +159,12 @@ final class ActivityLogger
             ->withProperties(array_merge($properties, $extraProps))
             ->dispatch($description);
     }
+
     private function buildMessage(string $description): string
     {
         $eventEmoji = $this->eventEmoji($this->event ?? '');
-        $appName    = $this->escapeMarkdownV2(config('app.name', 'Laravel'));
-        $env        = $this->escapeMarkdownV2(app()->environment());
+        $appName = $this->escapeMarkdownV2(config('app.name', 'Laravel'));
+        $env = $this->escapeMarkdownV2(app()->environment());
 
         $lines = [
             "$eventEmoji *Activity* — $appName `[$env]`",
@@ -225,12 +226,12 @@ final class ActivityLogger
     private function eventEmoji(string $event): string
     {
         return match ($event) {
-            'created'      => '🟢',
-            'updated'      => '🔵',
-            'deleted'      => '🔴',
-            'restored'     => '♻️',
+            'created' => '🟢',
+            'updated' => '🔵',
+            'deleted' => '🔴',
+            'restored' => '♻️',
             'forceDeleted' => '💣',
-            default        => '📋',
+            default => '📋',
         };
     }
 }
