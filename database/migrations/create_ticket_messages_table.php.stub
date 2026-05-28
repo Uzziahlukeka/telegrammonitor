@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('ticket_messages', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('ticket_id')->constrained('support_tickets')->cascadeOnDelete();
+            $table->enum('direction', ['user_to_agent', 'agent_to_user']);
+            $table->string('agent_name')->nullable();
+            $table->text('message_text')->nullable();
+            $table->string('media_type')->nullable(); // photo, document, video, audio, voice, sticker, video_note
+            $table->string('media_file_id', 512)->nullable();
+            $table->text('media_caption')->nullable();
+            $table->string('media_file_name')->nullable();
+            $table->unsignedBigInteger('telegram_message_id')->nullable(); // message ID in user private chat
+            $table->unsignedBigInteger('group_message_id')->nullable();    // message ID in staff group
+            $table->timestamps();
+
+            $table->index('ticket_id');
+            $table->index('group_message_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('ticket_messages');
+    }
+};

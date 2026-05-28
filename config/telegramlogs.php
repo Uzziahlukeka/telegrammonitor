@@ -231,6 +231,79 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Telegram Support Bot (Ticketing System)
+    |--------------------------------------------------------------------------
+    |
+    | This section powers the user ↔ agent tunnel:
+    |   User DMs the bot → ticket created → forwarded to staff group
+    |   Agent replies in group → bot relays reply to user's private chat
+    |
+    | Setup: php artisan telegram:support setup
+    |
+    */
+    'support_bot' => [
+
+        /*
+        |----------------------------------------------------------------------
+        | Support Bot Token
+        |----------------------------------------------------------------------
+        |
+        | Token for the support bot. Can be the same bot as the log bot or
+        | a dedicated one — a separate bot is recommended for clarity.
+        |
+        */
+        'bot_token' => env('TELEGRAM_SUPPORT_BOT_TOKEN', env('TELEGRAM_BOT_TOKEN')),
+
+        /*
+        |----------------------------------------------------------------------
+        | Staff Group ID
+        |----------------------------------------------------------------------
+        |
+        | Numeric ID of the private Telegram group where agents work.
+        | Supergroup IDs start with -100 (e.g. -1001234567890).
+        | The bot must be an admin of this group.
+        |
+        */
+        'group_id' => env('TELEGRAM_SUPPORT_GROUP_ID'),
+
+        /*
+        |----------------------------------------------------------------------
+        | Webhook Path
+        |----------------------------------------------------------------------
+        |
+        | The URL path that Telegram will POST updates to.
+        | Make sure this route is publicly accessible and excluded from CSRF.
+        |
+        */
+        'webhook_path' => env('TELEGRAM_SUPPORT_WEBHOOK_PATH', '/telegram/support/webhook'),
+
+        /*
+        |----------------------------------------------------------------------
+        | Webhook Secret Token
+        |----------------------------------------------------------------------
+        |
+        | Optional random string used to validate that incoming webhook
+        | requests are genuinely from Telegram (X-Telegram-Bot-Api-Secret-Token).
+        | Strongly recommended in production.
+        |
+        */
+        'webhook_secret' => env('TELEGRAM_SUPPORT_WEBHOOK_SECRET'),
+
+        /*
+        |----------------------------------------------------------------------
+        | Bot Messages (customisable)
+        |----------------------------------------------------------------------
+        */
+        'messages' => [
+            'welcome' => env('TELEGRAM_SUPPORT_MSG_WELCOME'),
+            'ticket_created' => env('TELEGRAM_SUPPORT_MSG_CREATED'),
+            'ticket_closed' => env('TELEGRAM_SUPPORT_MSG_CLOSED'),
+            'help' => env('TELEGRAM_SUPPORT_MSG_HELP'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Logging Channels Configuration
     |--------------------------------------------------------------------------
     |
