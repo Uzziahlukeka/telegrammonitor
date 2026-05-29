@@ -9,6 +9,7 @@ use Uzhlaravel\Telegramlogs\Commands\InstallTelegramLogsCommand;
 use Uzhlaravel\Telegramlogs\Commands\SupportBotCommand;
 use Uzhlaravel\Telegramlogs\Commands\TelegramlogsCommand;
 use Uzhlaravel\Telegramlogs\Support\SupportBotHandler;
+use Uzhlaravel\Telegramlogs\WebChat\WebChatBridge;
 
 final class TelegramlogsServiceProvider extends ServiceProvider
 {
@@ -36,6 +37,11 @@ final class TelegramlogsServiceProvider extends ServiceProvider
         $this->app->singleton(SupportBotHandler::class, function () {
             return new SupportBotHandler;
         });
+
+        // Web chat bridge — tunnels widget messages to/from Telegram group
+        $this->app->singleton(WebChatBridge::class, function () {
+            return new WebChatBridge;
+        });
     }
 
     public function boot(): void
@@ -53,9 +59,19 @@ final class TelegramlogsServiceProvider extends ServiceProvider
             ),
         ], 'telegramlogs-support-migrations');
 
+        $this->publishes([
+            __DIR__.'/../database/migrations/create_web_chat_sessions_table.php.stub' => database_path(
+                'migrations/'.date('Y_m_d_His', mktime(0, 0, 2)).'_create_web_chat_sessions_table.php'
+            ),
+            __DIR__.'/../database/migrations/create_web_chat_messages_table.php.stub' => database_path(
+                'migrations/'.date('Y_m_d_His', mktime(0, 0, 3)).'_create_web_chat_messages_table.php'
+            ),
+        ], 'telegramlogs-webchat-migrations');
+
         $this->registerCommands();
         $this->addTelegramLogChannel();
         $this->loadSupportRoutes();
+        $this->loadViews();
     }
 
     protected function registerCommands(): void
@@ -87,9 +103,23 @@ final class TelegramlogsServiceProvider extends ServiceProvider
 
     protected function loadSupportRoutes(): void
     {
-        // Only register the webhook route when the support bot is configured
-        if (config('telegramlogs.support_bot.bot_token')) {
+        $hasBotToken = (bool) config('telegramlogs.support_bot.bot_token');
+
+        if ($hasBotToken) {
+            // Telegram-to-Telegram support bot webhook
             $this->loadRoutesFrom(__DIR__.'/../routes/support.php');
+
+            // Web chat widget API (no Telegram account needed for end users)
+            $this->loadRoutesFrom(__DIR__.'/../routes/webchat.php');
         }
+    }
+
+    protected function loadViews(): void
+    {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'telegramlogs');
+
+        $this->publishes([
+            __DIR__.'/../resources/views' => resource_path('views/vendor/telegramlogs'),
+        ], 'telegramlogs-views');
     }
 }

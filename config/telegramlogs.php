@@ -304,6 +304,67 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Web Chat Widget (no Telegram account needed for users)
+    |--------------------------------------------------------------------------
+    |
+    | Embeds a floating chat widget on your website. Users write in the widget,
+    | messages are tunnelled to the same Telegram staff group, and agent replies
+    | appear in the widget in real time (via polling).
+    |
+    | Inclusion in your Blade layout (before </body>):
+    |   @include('telegramlogs::webchat-widget')
+    |
+    | OR embed via a single <script> tag:
+    |   <script src="/telegram-support/widget.js"></script>
+    |
+    | Setup: php artisan telegram:support setup
+    |
+    */
+    'web_chat' => [
+
+        /*
+        |----------------------------------------------------------------------
+        | Max Upload Size (MB)
+        |----------------------------------------------------------------------
+        */
+        'max_upload_mb' => env('TELEGRAM_WEBCHAT_MAX_UPLOAD_MB', 20),
+
+        /*
+        |----------------------------------------------------------------------
+        | Poll Interval (ms)
+        |----------------------------------------------------------------------
+        |
+        | How often the widget checks for new messages from agents.
+        |
+        */
+        'poll_interval_ms' => env('TELEGRAM_WEBCHAT_POLL_MS', 3000),
+
+        /*
+        |----------------------------------------------------------------------
+        | Widget Appearance & Behaviour
+        |----------------------------------------------------------------------
+        */
+        'widget' => [
+            'title'           => env('TELEGRAM_WEBCHAT_TITLE', 'Support'),
+            'subtitle'        => env('TELEGRAM_WEBCHAT_SUBTITLE', 'Nous répondons rapidement'),
+            'color'           => env('TELEGRAM_WEBCHAT_COLOR', '#0088CC'),
+            'placeholder'     => env('TELEGRAM_WEBCHAT_PLACEHOLDER', 'Votre message...'),
+            'welcome_message' => env('TELEGRAM_WEBCHAT_WELCOME', 'Bonjour ! Comment pouvons-nous vous aider ?'),
+            'require_name'    => env('TELEGRAM_WEBCHAT_REQUIRE_NAME', false),
+        ],
+
+        /*
+        |----------------------------------------------------------------------
+        | Custom Messages
+        |----------------------------------------------------------------------
+        */
+        'messages' => [
+            'session_closed' => env('TELEGRAM_WEBCHAT_MSG_CLOSED'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Logging Channels Configuration
     |--------------------------------------------------------------------------
     |

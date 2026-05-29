@@ -145,7 +145,16 @@ class SupportBotHandler
             return;
         }
 
-        // Find the ticket from the replied-to group message
+        // ── Check web chat sessions first ────────────────────────────────────
+        $webChatMsg = \Uzhlaravel\Telegramlogs\WebChat\WebChatMessage::where('group_message_id', $repliedToId)->first();
+
+        if ($webChatMsg) {
+            app(\Uzhlaravel\Telegramlogs\WebChat\WebChatBridge::class)->handleAgentReply($message, $webChatMsg);
+
+            return;
+        }
+
+        // ── Then check Telegram-to-Telegram tickets ───────────────────────────
         $ticketMessage = TicketMessage::where('group_message_id', $repliedToId)->first();
 
         if (! $ticketMessage) {

@@ -15,7 +15,12 @@
         "realtime",
         "markdown",
         "threaded discussions",
-        "Activity logs"
+        "Activity logs",
+        "support bot",
+        "ticketing",
+        "web chat",
+        "chat widget",
+        "livechat"
     ],
     "homepage": "https://github.com/Uzziahlukeka/telegrammonitor",
     "license": "MIT",
