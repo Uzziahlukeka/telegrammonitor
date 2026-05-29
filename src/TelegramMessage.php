@@ -23,9 +23,12 @@ final class TelegramMessage
 
     private ?string $parseMode;
 
-    public function __construct()
+    /**
+     * @param  string  $role  BotRegistry role to use ('default', 'support', or any custom role).
+     */
+    public function __construct(string $role = 'default')
     {
-        $this->botToken = BotRegistry::token('default');
+        $this->botToken = BotRegistry::token($role);
         $this->chatId = config('telegramlogs.chat_id', '');
         $this->topicId = config('telegramlogs.topic_message_id');
         $this->parseMode = config('telegramlogs.formatting.parse_mode');
@@ -34,6 +37,18 @@ final class TelegramMessage
         $this->client = new Client([
             'timeout' => $this->timeout,
         ]);
+    }
+
+    /**
+     * Get a TelegramMessage instance wired to a specific bot role.
+     *
+     * Usage:
+     *   TelegramMessage::forRole('notifications')->toChat('-100xxx', 'Hello!');
+     *   TelegramMessage::forRole('marketing')->message('New campaign live!');
+     */
+    public static function forRole(string $role): self
+    {
+        return new self($role);
     }
 
     /**

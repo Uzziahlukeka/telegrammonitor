@@ -49,19 +49,32 @@ return [
     |   default → logs channel, TelegramMessage, activity log
     |   support → support ticket bot + web chat widget
     |
-    | You may add custom roles here too; resolve them with:
+    | You may add as many custom roles as you need. Resolve any role with:
     |   Uzhlaravel\Telegramlogs\BotRegistry::token('your-role')
+    |   TelegramMessage::forRole('your-role')->toChat('-100xxx', 'msg')
+    |
+    | Example with 3 bots:
+    |   TELEGRAM_BOT_TOKEN          → internal logs & monitoring
+    |   TELEGRAM_SUPPORT_BOT_TOKEN  → customer-facing support / web chat
+    |   TELEGRAM_NOTIF_BOT_TOKEN    → your own third role (notifications, etc.)
     |
     */
     'bots' => [
+        // Powers: log channel, TelegramMessage (default), activity log.
         'default' => [
             'token' => env('TELEGRAM_BOT_TOKEN'),
         ],
 
-        // Leave empty to reuse the default bot for support.
+        // Powers: support ticket bot + web chat widget.
+        // Leave empty → falls back to the default bot (single-bot mode).
         'support' => [
             'token' => env('TELEGRAM_SUPPORT_BOT_TOKEN'),
         ],
+
+        // Add any extra role you need; empty = inherits default bot.
+        // 'notifications' => [
+        //     'token' => env('TELEGRAM_NOTIF_BOT_TOKEN'),
+        // ],
     ],
 
     /*
