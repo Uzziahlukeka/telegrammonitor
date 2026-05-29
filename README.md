@@ -28,6 +28,13 @@ Supports **Laravel 10 → 13**, PHP 8.2+, and includes production-only mode so n
   - [Activity Log](#activity-log)
     - [HasTelegramActivity Trait](#hastelegramactivity-trait)
     - [TelegramActivity Facade](#telegramactivity-facade)
+- [Support Bot (Ticketing Tunnel)](#support-bot-ticketing-tunnel)
+  - [Multiple Bots (logs vs support)](#multiple-bots-logs-vs-support)
+  - [Quick Setup](#quick-setup)
+  - [Agent Commands](#agent-commands-in-the-staff-group)
+  - [Artisan Commands](#artisan-commands-1)
+  - [Supported Media Types](#supported-media-types)
+  - [TelegramSupport Facade](#telegramsupport-facade)
 - [Artisan Commands](#artisan-commands)
 - [Log Levels](#log-levels)
 - [Getting Telegram Credentials](#getting-telegram-credentials)
@@ -42,6 +49,8 @@ Supports **Laravel 10 → 13**, PHP 8.2+, and includes production-only mode so n
 - **Monolog integration** — drop-in `telegram` log channel; works with `LOG_CHANNEL=telegram` or as a stacked channel
 - **Direct messaging** — send arbitrary text to any chat from anywhere in your app
 - **Activity log** — track Eloquent model `created / updated / deleted` events and push them to Telegram (inspired by [spatie/laravel-activitylog](https://github.com/spatie/laravel-activitylog))
+- **Support bot / ticketing tunnel** — user DMs become tickets forwarded to a staff group; agent replies are relayed back automatically, with full document/media support
+- **Single or multiple bots** — one bot handles everything by default; split logs and support across dedicated bots whenever you need to, with automatic fallback
 - **Production-only mode** — restrict notifications to specific environments with a single env var
 - **Smart formatting** — emoji-labelled MarkdownV2 messages with context, exception details, and stack traces
 - **Long message splitting** — automatically splits messages that exceed Telegram's 4096-char limit
@@ -385,9 +394,237 @@ php artisan telegramlogs:test --list
 
 ---
 
+## Support Bot (Ticketing Tunnel)
+
+The package includes a full **user ↔ agent support tunnel** built on top of Telegram.
+
+```
+User → DM to bot → ticket created → message forwarded to staff group
+Agent → reply in group             → bot relays reply to user's private chat
+```
+
+All media types are supported: text, photos, documents, videos, voice messages, audio files, stickers.
+
+---
+
+### Architecture
+
+```
+[User private chat]          [Staff group]
+      User ──────────────►  🎫 Ticket #0001
+                             👤 Alice (@alice)
+                             📅 28/05/2026 14:30
+                             💬 "J'ai un problème..."
+                                    │
+      User ◄──────────────  Agent replies with /reply ──► bot forwards to user
+```
+
+Each ticket is stored in the database with a mapping between the group message ID and the user's Telegram ID. Agents reply using Telegram's native **Reply** feature — no slash commands needed to answer.
+
+---
+
+### Multiple Bots (logs vs support)
+
+By default the package runs with **one bot**: `TELEGRAM_BOT_TOKEN` powers the log channel, direct messages, the support ticket bot, and the web chat widget. You don't need to configure anything to stay single-bot.
+
+When you'd rather keep a quiet internal **logs** bot separate from a customer-facing **support** bot, give the support role its own token:
+
+```env
+# Default bot — logs, direct messages, activity log
+TELEGRAM_BOT_TOKEN=111111:AAA-logs-bot-token
+
+# Dedicated support bot — ticketing + web chat (optional)
+TELEGRAM_SUPPORT_BOT_TOKEN=222222:BBB-support-bot-token
+```
+
+Tokens are resolved per *role* in `config/telegramlogs.php`. Any role left empty transparently inherits the `default` bot:
+
+```php
+'bots' => [
+    'default' => ['token' => env('TELEGRAM_BOT_TOKEN')],
+    'support' => ['token' => env('TELEGRAM_SUPPORT_BOT_TOKEN')], // empty → uses default
+],
+```
+
+| Role | Used by | Falls back to |
+|------|---------|---------------|
+| `default` | log channel, `TelegramMessage`, activity log | — |
+| `support` | support ticket bot + web chat widget | `default` |
+
+**Add your own roles** for any extra bots, then resolve their tokens anywhere:
+
+```php
+use Uzhlaravel\Telegramlogs\BotRegistry;
+
+$token = BotRegistry::token('marketing');   // your custom role, falls back to default
+BotRegistry::hasDedicatedBot('support');     // true only if support has its own token
+BotRegistry::isSingleBotMode();              // true when every role shares the default bot
+```
+
+Inspect your current topology at any time:
+
+```bash
+php artisan telegram:support status
+```
+
+```
+Bot mode: single-bot
++---------+--------------+-------------------+
+| Role    | Token        | Resolution        |
++---------+--------------+-------------------+
+| default | ✅ configured | —                 |
+| support | ✅ configured | inherits default  |
++---------+--------------+-------------------+
+```
+
+> Using two bots? Each bot is a separate Telegram identity, so create both via @BotFather. Only the **support** bot needs a webhook and must be an admin of the staff group; the logs bot only sends messages outbound.
+
+---
+
+### Quick Setup
+
+**1. Run the setup guide:**
+
+```bash
+php artisan telegram:support setup
+```
+
+**2. Add environment variables:**
+
+```env
+# Required
+TELEGRAM_SUPPORT_BOT_TOKEN=123456:ABC-your-support-bot-token
+TELEGRAM_SUPPORT_GROUP_ID=-1001234567890
+
+# Strongly recommended
+TELEGRAM_SUPPORT_WEBHOOK_SECRET=a-long-random-secret-string
+
+# Optional
+TELEGRAM_SUPPORT_WEBHOOK_PATH=/telegram/support/webhook
+```
+
+**3. Publish and run migrations:**
+
+```bash
+php artisan vendor:publish --tag=telegramlogs-support-migrations
+php artisan migrate
+```
+
+**4. Exclude the webhook route from CSRF** (in `bootstrap/app.php` for Laravel 11+ or `VerifyCsrfToken` middleware):
+
+```php
+// Laravel 11+ — bootstrap/app.php
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->validateCsrfTokens(except: [
+        '/telegram/support/webhook',
+    ]);
+})
+
+// Laravel 10 — App\Http\Middleware\VerifyCsrfToken
+protected $except = [
+    '/telegram/support/webhook',
+];
+```
+
+**5. Register the webhook:**
+
+```bash
+php artisan telegram:support webhook-set --url=https://yourapp.com/telegram/support/webhook
+```
+
+---
+
+### Environment Variables Reference
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `TELEGRAM_SUPPORT_GROUP_ID` | Yes | — | Numeric ID of the staff group (starts with -100) |
+| `TELEGRAM_SUPPORT_BOT_TOKEN` | No | falls back to `TELEGRAM_BOT_TOKEN` | Dedicated support bot token. Leave empty to reuse the default bot (single-bot mode) |
+| `TELEGRAM_SUPPORT_WEBHOOK_SECRET` | Recommended | `null` | Secret to validate incoming Telegram requests |
+| `TELEGRAM_SUPPORT_WEBHOOK_PATH` | No | `/telegram/support/webhook` | URL path for the webhook |
+
+> **Single bot by default.** If you only set `TELEGRAM_BOT_TOKEN`, the same bot handles logs **and** support. See [Multiple Bots](#multiple-bots-logs-vs-support) to split them.
+
+---
+
+### Agent Commands (in the staff group)
+
+Agents work by using Telegram's native **Reply** feature. Reply to any ticket message to send a response to the user. Additionally:
+
+| Command | Usage |
+|---------|-------|
+| `/status` | Reply to a ticket message to see ticket details (user info, message count, dates) |
+| `/close` | Reply to a ticket message to close it and notify the user |
+
+---
+
+### Artisan Commands
+
+```bash
+# Interactive setup guide
+php artisan telegram:support setup
+
+# Register the webhook with Telegram
+php artisan telegram:support webhook-set --url=https://yourapp.com/telegram/support/webhook
+
+# Remove the webhook
+php artisan telegram:support webhook-delete
+
+# Check bot connection and ticket stats
+php artisan telegram:support status
+
+# List recent tickets
+php artisan telegram:support tickets --limit=50
+```
+
+---
+
+### User Commands (in the private chat)
+
+| Command | Description |
+|---------|-------------|
+| `/start` | Welcome message |
+| `/status` | Show the user's current open ticket status |
+| `/help` | Display help message |
+
+---
+
+### Supported Media Types
+
+Users can send all Telegram media types — the bot relays them transparently to the staff group and vice versa:
+
+- Text messages
+- Photos
+- Documents (PDF, DOCX, ZIP, etc.)
+- Videos
+- Audio files
+- Voice messages
+- Stickers
+- Circular video notes
+
+---
+
+### TelegramSupport Facade
+
+```php
+use TelegramSupport;
+
+// Check bot info
+TelegramSupport::getBotInfo();
+
+// Register webhook programmatically
+TelegramSupport::setWebhook('https://yourapp.com/telegram/support/webhook', $secret);
+
+// Process an update manually (useful for testing)
+TelegramSupport::processUpdate($update);
+```
+
+---
+
 ## Security
 
 - Store `TELEGRAM_BOT_TOKEN` only in `.env` — never commit it
+- Set `TELEGRAM_SUPPORT_WEBHOOK_SECRET` in production to prevent spoofed requests
 - Restrict which commands the bot can receive (via BotFather → `/mybots → Bot Settings → Group Privacy`)
 - Audit who has access to your Telegram channel regularly
 
