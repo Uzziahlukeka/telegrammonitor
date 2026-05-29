@@ -41,7 +41,7 @@ final class Telegramlogs extends AbstractProcessingHandler
     ) {
         parent::__construct($level, $bubble);
 
-        $this->botToken = config('telegramlogs.bot_token') ?? '';
+        $this->botToken = BotRegistry::token('default');
         $this->chatId = config('telegramlogs.chat_id') ?? '';
         $this->topicId = config('telegramlogs.topic_id');
         $this->timeout = $timeout ?? config('telegramlogs.timeout', 10);

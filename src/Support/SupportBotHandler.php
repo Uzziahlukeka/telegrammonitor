@@ -28,7 +28,7 @@ class SupportBotHandler
 
     public function __construct()
     {
-        $this->botToken = (string) config('telegramlogs.support_bot.bot_token', config('telegramlogs.bot_token', ''));
+        $this->botToken = \Uzhlaravel\Telegramlogs\BotRegistry::token('support');
         $this->supportGroupId = (string) config('telegramlogs.support_bot.group_id', '');
         $this->timeout = (int) config('telegramlogs.timeout', 10);
         $this->client = new Client(['timeout' => $this->timeout]);
@@ -313,6 +313,7 @@ class SupportBotHandler
         $byUser = $ticket->messages()->where('direction', 'user_to_agent')->count();
         $byAgent = $ticket->messages()->where('direction', 'agent_to_user')->count();
         $userTag = $ticket->username ? " (@{$ticket->username})" : '';
+        $lastActivity = $ticket->last_activity_at?->format('d/m/Y H:i') ?? 'N/A';
 
         $this->sendMessage($groupChatId,
             "📋 Ticket {$ticket->ticket_tag}\n" .
@@ -321,7 +322,7 @@ class SupportBotHandler
             "📊 Statut : {$ticket->status}\n" .
             "💬 Messages : {$total} ({$byUser} utilisateur / {$byAgent} agent)\n" .
             "🕐 Ouvert : {$ticket->created_at->format('d/m/Y H:i')}\n" .
-            "🔄 Dernière activité : {$ticket->last_activity_at?->format('d/m/Y H:i') ?? 'N/A'}",
+            "🔄 Dernière activité : {$lastActivity}",
             ['reply_to_message_id' => $message['message_id']]
         );
     }

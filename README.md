@@ -29,6 +29,7 @@ Supports **Laravel 10 → 13**, PHP 8.2+, and includes production-only mode so n
     - [HasTelegramActivity Trait](#hastelegramactivity-trait)
     - [TelegramActivity Facade](#telegramactivity-facade)
 - [Support Bot (Ticketing Tunnel)](#support-bot-ticketing-tunnel)
+  - [Multiple Bots (logs vs support)](#multiple-bots-logs-vs-support)
   - [Quick Setup](#quick-setup)
   - [Agent Commands](#agent-commands-in-the-staff-group)
   - [Artisan Commands](#artisan-commands-1)
@@ -49,6 +50,7 @@ Supports **Laravel 10 → 13**, PHP 8.2+, and includes production-only mode so n
 - **Direct messaging** — send arbitrary text to any chat from anywhere in your app
 - **Activity log** — track Eloquent model `created / updated / deleted` events and push them to Telegram (inspired by [spatie/laravel-activitylog](https://github.com/spatie/laravel-activitylog))
 - **Support bot / ticketing tunnel** — user DMs become tickets forwarded to a staff group; agent replies are relayed back automatically, with full document/media support
+- **Single or multiple bots** — one bot handles everything by default; split logs and support across dedicated bots whenever you need to, with automatic fallback
 - **Production-only mode** — restrict notifications to specific environments with a single env var
 - **Smart formatting** — emoji-labelled MarkdownV2 messages with context, exception details, and stack traces
 - **Long message splitting** — automatically splits messages that exceed Telegram's 4096-char limit
@@ -421,6 +423,64 @@ Each ticket is stored in the database with a mapping between the group message I
 
 ---
 
+### Multiple Bots (logs vs support)
+
+By default the package runs with **one bot**: `TELEGRAM_BOT_TOKEN` powers the log channel, direct messages, the support ticket bot, and the web chat widget. You don't need to configure anything to stay single-bot.
+
+When you'd rather keep a quiet internal **logs** bot separate from a customer-facing **support** bot, give the support role its own token:
+
+```env
+# Default bot — logs, direct messages, activity log
+TELEGRAM_BOT_TOKEN=111111:AAA-logs-bot-token
+
+# Dedicated support bot — ticketing + web chat (optional)
+TELEGRAM_SUPPORT_BOT_TOKEN=222222:BBB-support-bot-token
+```
+
+Tokens are resolved per *role* in `config/telegramlogs.php`. Any role left empty transparently inherits the `default` bot:
+
+```php
+'bots' => [
+    'default' => ['token' => env('TELEGRAM_BOT_TOKEN')],
+    'support' => ['token' => env('TELEGRAM_SUPPORT_BOT_TOKEN')], // empty → uses default
+],
+```
+
+| Role | Used by | Falls back to |
+|------|---------|---------------|
+| `default` | log channel, `TelegramMessage`, activity log | — |
+| `support` | support ticket bot + web chat widget | `default` |
+
+**Add your own roles** for any extra bots, then resolve their tokens anywhere:
+
+```php
+use Uzhlaravel\Telegramlogs\BotRegistry;
+
+$token = BotRegistry::token('marketing');   // your custom role, falls back to default
+BotRegistry::hasDedicatedBot('support');     // true only if support has its own token
+BotRegistry::isSingleBotMode();              // true when every role shares the default bot
+```
+
+Inspect your current topology at any time:
+
+```bash
+php artisan telegram:support status
+```
+
+```
+Bot mode: single-bot
++---------+--------------+-------------------+
+| Role    | Token        | Resolution        |
++---------+--------------+-------------------+
+| default | ✅ configured | —                 |
+| support | ✅ configured | inherits default  |
++---------+--------------+-------------------+
+```
+
+> Using two bots? Each bot is a separate Telegram identity, so create both via @BotFather. Only the **support** bot needs a webhook and must be an admin of the staff group; the logs bot only sends messages outbound.
+
+---
+
 ### Quick Setup
 
 **1. Run the setup guide:**
@@ -478,10 +538,12 @@ php artisan telegram:support webhook-set --url=https://yourapp.com/telegram/supp
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `TELEGRAM_SUPPORT_BOT_TOKEN` | Yes | — | Bot token for the support bot |
 | `TELEGRAM_SUPPORT_GROUP_ID` | Yes | — | Numeric ID of the staff group (starts with -100) |
+| `TELEGRAM_SUPPORT_BOT_TOKEN` | No | falls back to `TELEGRAM_BOT_TOKEN` | Dedicated support bot token. Leave empty to reuse the default bot (single-bot mode) |
 | `TELEGRAM_SUPPORT_WEBHOOK_SECRET` | Recommended | `null` | Secret to validate incoming Telegram requests |
 | `TELEGRAM_SUPPORT_WEBHOOK_PATH` | No | `/telegram/support/webhook` | URL path for the webhook |
+
+> **Single bot by default.** If you only set `TELEGRAM_BOT_TOKEN`, the same bot handles logs **and** support. See [Multiple Bots](#multiple-bots-logs-vs-support) to split them.
 
 ---
 

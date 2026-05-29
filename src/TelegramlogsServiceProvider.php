@@ -103,9 +103,9 @@ final class TelegramlogsServiceProvider extends ServiceProvider
 
     protected function loadSupportRoutes(): void
     {
-        $hasBotToken = (bool) config('telegramlogs.support_bot.bot_token');
-
-        if ($hasBotToken) {
+        // The support bot resolves to its own token, or falls back to the
+        // default bot when running in single-bot mode.
+        if (BotRegistry::isConfigured('support')) {
             // Telegram-to-Telegram support bot webhook
             $this->loadRoutesFrom(__DIR__.'/../routes/support.php');
 

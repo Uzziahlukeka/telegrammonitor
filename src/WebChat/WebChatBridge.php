@@ -27,7 +27,7 @@ class WebChatBridge
 
     public function __construct()
     {
-        $this->botToken = (string) config('telegramlogs.support_bot.bot_token', config('telegramlogs.bot_token', ''));
+        $this->botToken = \Uzhlaravel\Telegramlogs\BotRegistry::token('support');
         $this->groupId = (string) config('telegramlogs.support_bot.group_id', '');
         $this->client = new Client(['timeout' => (int) config('telegramlogs.timeout', 10)]);
     }
@@ -264,6 +264,7 @@ class WebChatBridge
         $total = $session->messages()->count();
         $byUser = $session->messages()->where('direction', 'user_to_agent')->count();
         $byAgent = $session->messages()->where('direction', 'agent_to_user')->count();
+        $lastActivity = $session->last_activity_at?->format('d/m/Y H:i') ?? 'N/A';
 
         $this->apiSendMessage(
             (string) $telegramMessage['chat']['id'],
@@ -272,7 +273,7 @@ class WebChatBridge
             "📊 Statut : {$session->status}\n" .
             "💬 Messages : {$total} ({$byUser} user / {$byAgent} agent)\n" .
             "🕐 Ouverture : {$session->created_at->format('d/m/Y H:i')}\n" .
-            "🔄 Dernière activité : {$session->last_activity_at?->format('d/m/Y H:i') ?? 'N/A'}",
+            "🔄 Dernière activité : {$lastActivity}",
             ['reply_to_message_id' => $telegramMessage['message_id']]
         );
     }

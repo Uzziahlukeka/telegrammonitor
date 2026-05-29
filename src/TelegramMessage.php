@@ -25,7 +25,7 @@ final class TelegramMessage
 
     public function __construct()
     {
-        $this->botToken = config('telegramlogs.bot_token', '');
+        $this->botToken = BotRegistry::token('default');
         $this->chatId = config('telegramlogs.chat_id', '');
         $this->topicId = config('telegramlogs.topic_message_id');
         $this->parseMode = config('telegramlogs.formatting.parse_mode');

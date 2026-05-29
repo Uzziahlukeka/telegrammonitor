@@ -35,6 +35,37 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bots (single-bot by default, multi-bot when you need it)
+    |--------------------------------------------------------------------------
+    |
+    | By default this package runs with ONE bot: the 'default' token below is
+    | used for logs, direct messages, the support ticketing bot AND the web
+    | chat widget. You don't need to touch anything to stay single-bot.
+    |
+    | If you'd rather separate responsibilities — e.g. a quiet "logs" bot and a
+    | customer-facing "support" bot — just give the role its own token. Any role
+    | left empty automatically falls back to the 'default' bot.
+    |
+    |   default → logs channel, TelegramMessage, activity log
+    |   support → support ticket bot + web chat widget
+    |
+    | You may add custom roles here too; resolve them with:
+    |   Uzhlaravel\Telegramlogs\BotRegistry::token('your-role')
+    |
+    */
+    'bots' => [
+        'default' => [
+            'token' => env('TELEGRAM_BOT_TOKEN'),
+        ],
+
+        // Leave empty to reuse the default bot for support.
+        'support' => [
+            'token' => env('TELEGRAM_SUPPORT_BOT_TOKEN'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Telegram Topic ID
     |--------------------------------------------------------------------------
     |
@@ -245,14 +276,17 @@ return [
 
         /*
         |----------------------------------------------------------------------
-        | Support Bot Token
+        | Support Bot Token (legacy alias)
         |----------------------------------------------------------------------
         |
-        | Token for the support bot. Can be the same bot as the log bot or
-        | a dedicated one — a separate bot is recommended for clarity.
+        | Token resolution now lives in the 'bots' section above and is handled
+        | by Uzhlaravel\Telegramlogs\BotRegistry, which falls back to the
+        | default bot automatically. This key is kept as a legacy alias for
+        | backward compatibility and is only read when 'bots.support.token'
+        | is empty.
         |
         */
-        'bot_token' => env('TELEGRAM_SUPPORT_BOT_TOKEN', env('TELEGRAM_BOT_TOKEN')),
+        'bot_token' => env('TELEGRAM_SUPPORT_BOT_TOKEN'),
 
         /*
         |----------------------------------------------------------------------

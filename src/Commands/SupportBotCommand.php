@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Uzhlaravel\Telegramlogs\Commands;
 
 use Illuminate\Console\Command;
+use Uzhlaravel\Telegramlogs\BotRegistry;
 use Uzhlaravel\Telegramlogs\Support\SupportBotHandler;
 use Uzhlaravel\Telegramlogs\Support\SupportTicket;
 
@@ -55,14 +56,24 @@ final class SupportBotCommand extends Command
         $this->line('  <comment>Step 4 — Set environment variables:</comment>');
         $this->newLine();
         $this->line('  <info>Required:</info>');
-        $this->line('  TELEGRAM_SUPPORT_BOT_TOKEN=123456:ABC-your-bot-token');
         $this->line('  TELEGRAM_SUPPORT_GROUP_ID=-100123456789');
+        $this->newLine();
+        $this->line('  <info>Bot token — choose ONE:</info>');
+        $this->line('  <comment>• Single-bot (default):</comment> reuse your logs bot — set nothing extra,');
+        $this->line('    support automatically falls back to TELEGRAM_BOT_TOKEN.');
+        $this->line('  <comment>• Separate support bot:</comment> create a second bot and set:');
+        $this->line('    TELEGRAM_SUPPORT_BOT_TOKEN=123456:ABC-your-support-bot-token');
         $this->newLine();
         $this->line('  <info>Recommended:</info>');
         $this->line('  TELEGRAM_SUPPORT_WEBHOOK_SECRET=a-long-random-string');
         $this->newLine();
         $this->line('  <info>Optional:</info>');
         $this->line('  TELEGRAM_SUPPORT_WEBHOOK_PATH=/telegram/support/webhook');
+        $this->newLine();
+
+        // Reflect the user's current topology.
+        $mode = BotRegistry::isSingleBotMode() ? 'single-bot (support shares the default bot)' : 'multi-bot (dedicated support bot)';
+        $this->line("  <comment>Current mode:</comment> <info>{$mode}</info>");
         $this->newLine();
 
         $this->line('  <comment>Step 5 — Publish and run migrations:</comment>');
@@ -132,10 +143,29 @@ final class SupportBotCommand extends Command
 
     private function runStatus(SupportBotHandler $handler): int
     {
+        // Show the bot topology first (single vs multi-bot).
+        $mode = BotRegistry::isSingleBotMode() ? 'single-bot' : 'multi-bot';
+        $this->components->info("Bot mode: {$mode}");
+
+        $rows = [];
+        foreach (BotRegistry::roles() as $role) {
+            $configured = BotRegistry::isConfigured($role);
+            $dedicated = BotRegistry::hasDedicatedBot($role);
+            $rows[] = [
+                $role,
+                $configured ? '✅ configured' : '⚠️ missing',
+                $role === 'default'
+                    ? '—'
+                    : ($dedicated ? 'own bot' : 'inherits default'),
+            ];
+        }
+        $this->table(['Role', 'Token', 'Resolution'], $rows);
+        $this->newLine();
+
         $result = $handler->getBotInfo();
 
         if (! ($result['ok'] ?? false)) {
-            $this->components->error('Cannot reach Telegram API. Check TELEGRAM_SUPPORT_BOT_TOKEN.');
+            $this->components->error('Cannot reach Telegram API. Check the support bot token (TELEGRAM_SUPPORT_BOT_TOKEN or TELEGRAM_BOT_TOKEN).');
 
             return self::FAILURE;
         }
@@ -147,6 +177,7 @@ final class SupportBotCommand extends Command
             ['Bot name', $bot['first_name'] ?? 'N/A'],
             ['Bot username', '@'.($bot['username'] ?? 'N/A')],
             ['Bot ID', (string) ($bot['id'] ?? 'N/A')],
+            ['Uses dedicated bot', BotRegistry::hasDedicatedBot('support') ? 'yes' : 'no (shares default)'],
             ['Support group', config('telegramlogs.support_bot.group_id', '(not set)')],
             ['Webhook path', config('telegramlogs.support_bot.webhook_path', '/telegram/support/webhook')],
             ['Webhook secret', config('telegramlogs.support_bot.webhook_secret') ? '✅ set' : '⚠️ not set'],
