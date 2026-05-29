@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
-class WebChatController extends Controller
+final class WebChatController extends Controller
 {
     public function __construct(private readonly WebChatBridge $bridge) {}
 
@@ -79,7 +79,7 @@ class WebChatController extends Controller
             return response()->json(['error' => 'Trop de messages. Attendez un moment.'], 429);
         }
 
-        $text = trim((string) $request->input('message', ''));
+        $text = mb_trim((string) $request->input('message', ''));
 
         if ($text === '') {
             return response()->json(['error' => 'Le message ne peut pas être vide.'], 422);
@@ -126,7 +126,7 @@ class WebChatController extends Controller
         $maxMb = (int) config('telegramlogs.web_chat.max_upload_mb', 20);
 
         $validator = Validator::make($request->all(), [
-            'file' => "required|file|max:".($maxMb * 1024),
+            'file' => 'required|file|max:'.($maxMb * 1024),
         ]);
 
         if ($validator->fails()) {
@@ -252,7 +252,7 @@ class WebChatController extends Controller
     public function widgetJs(): Response
     {
         $config = json_encode([
-            'baseUrl' => rtrim(config('app.url', ''), '/').'/telegram-support/chat',
+            'baseUrl' => mb_rtrim(config('app.url', ''), '/').'/telegram-support/chat',
             'title' => config('telegramlogs.web_chat.widget.title', 'Support'),
             'subtitle' => config('telegramlogs.web_chat.widget.subtitle', 'Nous répondons rapidement'),
             'color' => config('telegramlogs.web_chat.widget.color', '#0088CC'),
@@ -329,7 +329,7 @@ JS;
             return null;
         }
 
-        return mb_substr(strip_tags(trim($value)), 0, 255) ?: null;
+        return mb_substr(strip_tags(mb_trim($value)), 0, 255) ?: null;
     }
 
     private function jsString(string $html): string

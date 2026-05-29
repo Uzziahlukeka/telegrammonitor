@@ -6,10 +6,9 @@ namespace Uzhlaravel\Telegramlogs\WebChat;
 
 use Exception;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use Uzhlaravel\Telegramlogs\BotRegistry;
 
 /**
  * Bridge between the web chat widget and the Telegram staff group.
@@ -17,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
  * User side: HTTP API polled by the widget (no Telegram account needed).
  * Agent side: replies in the Telegram staff group via the existing webhook.
  */
-class WebChatBridge
+final class WebChatBridge
 {
     private string $botToken;
 
@@ -27,7 +26,7 @@ class WebChatBridge
 
     public function __construct()
     {
-        $this->botToken = \Uzhlaravel\Telegramlogs\BotRegistry::token('support');
+        $this->botToken = BotRegistry::token('support');
         $this->groupId = (string) config('telegramlogs.support_bot.group_id', '');
         $this->client = new Client(['timeout' => (int) config('telegramlogs.timeout', 10)]);
     }
@@ -131,7 +130,7 @@ class WebChatBridge
         if ($session->isClosed()) {
             $this->apiSendMessage(
                 (string) $telegramMessage['chat']['id'],
-                "⚠️ Cette session web est déjà fermée.",
+                '⚠️ Cette session web est déjà fermée.',
                 ['reply_to_message_id' => $telegramMessage['message_id']]
             );
 
@@ -203,7 +202,7 @@ class WebChatBridge
             $content = $fileResp->getBody()->getContents();
 
             // Guess MIME from path extension
-            $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+            $ext = mb_strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
             $mime = match ($ext) {
                 'jpg', 'jpeg' => 'image/jpeg',
                 'png' => 'image/png',
@@ -268,11 +267,11 @@ class WebChatBridge
 
         $this->apiSendMessage(
             (string) $telegramMessage['chat']['id'],
-            "🌐 Session web\n" .
-            "👤 {$session->display_label}\n" .
-            "📊 Statut : {$session->status}\n" .
-            "💬 Messages : {$total} ({$byUser} user / {$byAgent} agent)\n" .
-            "🕐 Ouverture : {$session->created_at->format('d/m/Y H:i')}\n" .
+            "🌐 Session web\n".
+            "👤 {$session->display_label}\n".
+            "📊 Statut : {$session->status}\n".
+            "💬 Messages : {$total} ({$byUser} user / {$byAgent} agent)\n".
+            "🕐 Ouverture : {$session->created_at->format('d/m/Y H:i')}\n".
             "🔄 Dernière activité : {$lastActivity}",
             ['reply_to_message_id' => $telegramMessage['message_id']]
         );
@@ -325,7 +324,7 @@ class WebChatBridge
 
     private function agentName(array $from): string
     {
-        return trim(($from['first_name'] ?? 'Agent').' '.($from['last_name'] ?? ''));
+        return mb_trim(($from['first_name'] ?? 'Agent').' '.($from['last_name'] ?? ''));
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ namespace Uzhlaravel\Telegramlogs\Support;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class SupportTicket extends Model
+final class SupportTicket extends Model
 {
     protected $table = 'support_tickets';
 
@@ -47,7 +47,7 @@ class SupportTicket extends Model
 
     public function getDisplayNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . ($this->last_name ?? ''));
+        return mb_trim($this->first_name.' '.($this->last_name ?? ''));
     }
 
     public function getTicketTagAttribute(): string
@@ -59,7 +59,7 @@ class SupportTicket extends Model
     {
         parent::boot();
 
-        static::creating(function (SupportTicket $ticket): void {
+        self::creating(function (SupportTicket $ticket): void {
             if (! $ticket->ticket_number) {
                 $ticket->ticket_number = (static::max('ticket_number') ?? 0) + 1;
             }

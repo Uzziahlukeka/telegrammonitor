@@ -379,12 +379,12 @@ return [
         |----------------------------------------------------------------------
         */
         'widget' => [
-            'title'           => env('TELEGRAM_WEBCHAT_TITLE', 'Support'),
-            'subtitle'        => env('TELEGRAM_WEBCHAT_SUBTITLE', 'Nous répondons rapidement'),
-            'color'           => env('TELEGRAM_WEBCHAT_COLOR', '#0088CC'),
-            'placeholder'     => env('TELEGRAM_WEBCHAT_PLACEHOLDER', 'Votre message...'),
+            'title' => env('TELEGRAM_WEBCHAT_TITLE', 'Support'),
+            'subtitle' => env('TELEGRAM_WEBCHAT_SUBTITLE', 'Nous répondons rapidement'),
+            'color' => env('TELEGRAM_WEBCHAT_COLOR', '#0088CC'),
+            'placeholder' => env('TELEGRAM_WEBCHAT_PLACEHOLDER', 'Votre message...'),
             'welcome_message' => env('TELEGRAM_WEBCHAT_WELCOME', 'Bonjour ! Comment pouvons-nous vous aider ?'),
-            'require_name'    => env('TELEGRAM_WEBCHAT_REQUIRE_NAME', false),
+            'require_name' => env('TELEGRAM_WEBCHAT_REQUIRE_NAME', false),
         ],
 
         /*

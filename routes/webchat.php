@@ -22,10 +22,10 @@ use Uzhlaravel\Telegramlogs\WebChat\WebChatController;
 */
 
 Route::prefix('telegram-support')->group(function (): void {
-    Route::post('/chat/start',   [WebChatController::class, 'start'])->name('telegram.webchat.start');
-    Route::post('/chat/send',    [WebChatController::class, 'send'])->name('telegram.webchat.send');
-    Route::post('/chat/upload',  [WebChatController::class, 'upload'])->name('telegram.webchat.upload');
+    Route::post('/chat/start', [WebChatController::class, 'start'])->name('telegram.webchat.start');
+    Route::post('/chat/send', [WebChatController::class, 'send'])->name('telegram.webchat.send');
+    Route::post('/chat/upload', [WebChatController::class, 'upload'])->name('telegram.webchat.upload');
     Route::get('/chat/messages', [WebChatController::class, 'messages'])->name('telegram.webchat.messages');
     Route::get('/chat/file/{id}', [WebChatController::class, 'downloadFile'])->name('telegram.webchat.file');
-    Route::get('/widget.js',     [WebChatController::class, 'widgetJs'])->name('telegram.webchat.js');
+    Route::get('/widget.js', [WebChatController::class, 'widgetJs'])->name('telegram.webchat.js');
 });

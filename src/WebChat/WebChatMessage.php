@@ -7,7 +7,7 @@ namespace Uzhlaravel\Telegramlogs\WebChat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class WebChatMessage extends Model
+final class WebChatMessage extends Model
 {
     protected $table = 'web_chat_messages';
 

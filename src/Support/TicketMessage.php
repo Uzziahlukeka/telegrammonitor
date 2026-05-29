@@ -7,7 +7,7 @@ namespace Uzhlaravel\Telegramlogs\Support;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TicketMessage extends Model
+final class TicketMessage extends Model
 {
     protected $table = 'ticket_messages';
 

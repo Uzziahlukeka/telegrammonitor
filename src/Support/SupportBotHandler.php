@@ -8,6 +8,9 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
+use Uzhlaravel\Telegramlogs\BotRegistry;
+use Uzhlaravel\Telegramlogs\WebChat\WebChatBridge;
+use Uzhlaravel\Telegramlogs\WebChat\WebChatMessage;
 
 /**
  * Telegram Support Bot — tunnel between users (private chat) and staff (group).
@@ -16,7 +19,7 @@ use Illuminate\Support\Facades\Log;
  *   User → private message → bot → group (ticket header + media)
  *   Agent → reply in group  → bot → user (forwarded via copyMessage)
  */
-class SupportBotHandler
+final class SupportBotHandler
 {
     private string $botToken;
 
@@ -28,7 +31,7 @@ class SupportBotHandler
 
     public function __construct()
     {
-        $this->botToken = \Uzhlaravel\Telegramlogs\BotRegistry::token('support');
+        $this->botToken = BotRegistry::token('support');
         $this->supportGroupId = (string) config('telegramlogs.support_bot.group_id', '');
         $this->timeout = (int) config('telegramlogs.timeout', 10);
         $this->client = new Client(['timeout' => $this->timeout]);
@@ -42,6 +45,61 @@ class SupportBotHandler
     {
         if (isset($update['message'])) {
             $this->processMessage($update['message']);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Webhook management (used by the Artisan command)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public function setWebhook(string $url, ?string $secret = null): array
+    {
+        try {
+            $payload = ['url' => $url];
+            if ($secret) {
+                $payload['secret_token'] = $secret;
+            }
+
+            $response = $this->client->post(
+                "https://api.telegram.org/bot{$this->botToken}/setWebhook",
+                ['json' => $payload]
+            );
+
+            return json_decode($response->getBody()->getContents(), true) ?? [];
+        } catch (Exception $e) {
+            Log::error('SupportBotHandler::setWebhook failed: '.$e->getMessage());
+
+            return ['ok' => false, 'description' => $e->getMessage()];
+        }
+    }
+
+    public function deleteWebhook(): array
+    {
+        try {
+            $response = $this->client->post(
+                "https://api.telegram.org/bot{$this->botToken}/deleteWebhook"
+            );
+
+            return json_decode($response->getBody()->getContents(), true) ?? [];
+        } catch (Exception $e) {
+            Log::error('SupportBotHandler::deleteWebhook failed: '.$e->getMessage());
+
+            return ['ok' => false, 'description' => $e->getMessage()];
+        }
+    }
+
+    public function getBotInfo(): array
+    {
+        try {
+            $response = $this->client->get(
+                "https://api.telegram.org/bot{$this->botToken}/getMe"
+            );
+
+            return json_decode($response->getBody()->getContents(), true) ?? [];
+        } catch (Exception $e) {
+            Log::error('SupportBotHandler::getBotInfo failed: '.$e->getMessage());
+
+            return ['ok' => false, 'description' => $e->getMessage()];
         }
     }
 
@@ -146,10 +204,10 @@ class SupportBotHandler
         }
 
         // ── Check web chat sessions first ────────────────────────────────────
-        $webChatMsg = \Uzhlaravel\Telegramlogs\WebChat\WebChatMessage::where('group_message_id', $repliedToId)->first();
+        $webChatMsg = WebChatMessage::where('group_message_id', $repliedToId)->first();
 
         if ($webChatMsg) {
-            app(\Uzhlaravel\Telegramlogs\WebChat\WebChatBridge::class)->handleAgentReply($message, $webChatMsg);
+            app(WebChatBridge::class)->handleAgentReply($message, $webChatMsg);
 
             return;
         }
@@ -204,18 +262,18 @@ class SupportBotHandler
 
     private function handleUserCommand(string $command, array $from, string $chatId): void
     {
-        $cmd = strtolower(explode('@', explode(' ', $command)[0])[0]);
+        $cmd = mb_strtolower(explode('@', explode(' ', $command)[0])[0]);
 
         switch ($cmd) {
             case '/start':
                 $name = $from['first_name'] ?? '';
                 $greeting = $name ? "Bonjour {$name}! 👋\n\n" : "Bonjour! 👋\n\n";
                 $this->sendMessage($chatId, $this->cfg('messages.welcome',
-                    $greeting .
-                    "Bienvenue dans notre support. Envoyez-nous votre message, photo ou document et un agent vous répondra.\n\n" .
-                    "Commandes:\n" .
-                    "• /status — état de votre ticket en cours\n" .
-                    "• /help — aide"
+                    $greeting.
+                    "Bienvenue dans notre support. Envoyez-nous votre message, photo ou document et un agent vous répondra.\n\n".
+                    "Commandes:\n".
+                    "• /status — état de votre ticket en cours\n".
+                    '• /help — aide'
                 ));
                 break;
 
@@ -233,9 +291,9 @@ class SupportBotHandler
                     };
                     $count = $ticket->messages()->count();
                     $this->sendMessage($chatId,
-                        "{$emoji} Ticket {$ticket->ticket_tag}\n" .
-                        "Statut : {$ticket->status}\n" .
-                        "Messages échangés : {$count}\n" .
+                        "{$emoji} Ticket {$ticket->ticket_tag}\n".
+                        "Statut : {$ticket->status}\n".
+                        "Messages échangés : {$count}\n".
                         "Ouvert le : {$ticket->created_at->format('d/m/Y à H:i')}"
                     );
                 } else {
@@ -245,10 +303,10 @@ class SupportBotHandler
 
             default:
                 $this->sendMessage($chatId, $this->cfg('messages.help',
-                    "ℹ️ Aide\n\n" .
-                    "Envoyez simplement votre message et un agent vous répondra.\n\n" .
-                    "Vous pouvez envoyer :\n" .
-                    "• Texte\n• Photos\n• Documents\n• Vidéos\n• Messages vocaux\n\n" .
+                    "ℹ️ Aide\n\n".
+                    "Envoyez simplement votre message et un agent vous répondra.\n\n".
+                    "Vous pouvez envoyer :\n".
+                    "• Texte\n• Photos\n• Documents\n• Vidéos\n• Messages vocaux\n\n".
                     "Commandes :\n• /status — état de votre ticket\n• /help — cette aide"
                 ));
                 break;
@@ -271,7 +329,7 @@ class SupportBotHandler
         $ticket = $ticketMessage->ticket;
 
         if ($ticket->isClosed()) {
-            $this->sendMessage($groupChatId, "ℹ️ Ce ticket est déjà fermé.", [
+            $this->sendMessage($groupChatId, 'ℹ️ Ce ticket est déjà fermé.', [
                 'reply_to_message_id' => $message['message_id'],
             ]);
 
@@ -316,12 +374,12 @@ class SupportBotHandler
         $lastActivity = $ticket->last_activity_at?->format('d/m/Y H:i') ?? 'N/A';
 
         $this->sendMessage($groupChatId,
-            "📋 Ticket {$ticket->ticket_tag}\n" .
-            "👤 {$ticket->display_name}{$userTag}\n" .
-            "🆔 ID Telegram : {$ticket->user_telegram_id}\n" .
-            "📊 Statut : {$ticket->status}\n" .
-            "💬 Messages : {$total} ({$byUser} utilisateur / {$byAgent} agent)\n" .
-            "🕐 Ouvert : {$ticket->created_at->format('d/m/Y H:i')}\n" .
+            "📋 Ticket {$ticket->ticket_tag}\n".
+            "👤 {$ticket->display_name}{$userTag}\n".
+            "🆔 ID Telegram : {$ticket->user_telegram_id}\n".
+            "📊 Statut : {$ticket->status}\n".
+            "💬 Messages : {$total} ({$byUser} utilisateur / {$byAgent} agent)\n".
+            "🕐 Ouvert : {$ticket->created_at->format('d/m/Y H:i')}\n".
             "🔄 Dernière activité : {$lastActivity}",
             ['reply_to_message_id' => $message['message_id']]
         );
@@ -476,7 +534,7 @@ class SupportBotHandler
 
     private function agentName(array $from): string
     {
-        return trim(($from['first_name'] ?? 'Agent').' '.($from['last_name'] ?? ''));
+        return mb_trim(($from['first_name'] ?? 'Agent').' '.($from['last_name'] ?? ''));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -532,61 +590,6 @@ class SupportBotHandler
         }
 
         return [];
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Webhook management (used by the Artisan command)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public function setWebhook(string $url, ?string $secret = null): array
-    {
-        try {
-            $payload = ['url' => $url];
-            if ($secret) {
-                $payload['secret_token'] = $secret;
-            }
-
-            $response = $this->client->post(
-                "https://api.telegram.org/bot{$this->botToken}/setWebhook",
-                ['json' => $payload]
-            );
-
-            return json_decode($response->getBody()->getContents(), true) ?? [];
-        } catch (Exception $e) {
-            Log::error('SupportBotHandler::setWebhook failed: '.$e->getMessage());
-
-            return ['ok' => false, 'description' => $e->getMessage()];
-        }
-    }
-
-    public function deleteWebhook(): array
-    {
-        try {
-            $response = $this->client->post(
-                "https://api.telegram.org/bot{$this->botToken}/deleteWebhook"
-            );
-
-            return json_decode($response->getBody()->getContents(), true) ?? [];
-        } catch (Exception $e) {
-            Log::error('SupportBotHandler::deleteWebhook failed: '.$e->getMessage());
-
-            return ['ok' => false, 'description' => $e->getMessage()];
-        }
-    }
-
-    public function getBotInfo(): array
-    {
-        try {
-            $response = $this->client->get(
-                "https://api.telegram.org/bot{$this->botToken}/getMe"
-            );
-
-            return json_decode($response->getBody()->getContents(), true) ?? [];
-        } catch (Exception $e) {
-            Log::error('SupportBotHandler::getBotInfo failed: '.$e->getMessage());
-
-            return ['ok' => false, 'description' => $e->getMessage()];
-        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

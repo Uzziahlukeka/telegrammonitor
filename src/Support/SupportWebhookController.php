@@ -10,7 +10,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class SupportWebhookController extends Controller
+final class SupportWebhookController extends Controller
 {
     public function __construct(private readonly SupportBotHandler $handler) {}
 

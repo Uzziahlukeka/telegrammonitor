@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-class WebChatSession extends Model
+final class WebChatSession extends Model
 {
     protected $table = 'web_chat_sessions';
 
@@ -58,7 +58,7 @@ class WebChatSession extends Model
     {
         parent::boot();
 
-        static::creating(function (WebChatSession $session): void {
+        self::creating(function (WebChatSession $session): void {
             if (! $session->session_token) {
                 $session->session_token = (string) Str::uuid();
             }

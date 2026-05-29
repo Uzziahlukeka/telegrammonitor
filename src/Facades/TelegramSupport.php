@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Facade;
 use Uzhlaravel\Telegramlogs\Support\SupportBotHandler;
 
 /**
- * @see \Uzhlaravel\Telegramlogs\Support\SupportBotHandler
+ * @see SupportBotHandler
  */
-class TelegramSupport extends Facade
+final class TelegramSupport extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
