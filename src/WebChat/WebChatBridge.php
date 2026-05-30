@@ -62,7 +62,7 @@ final class WebChatBridge
      * Upload a file from the web user and forward it to the staff group.
      * Stores the file locally, sends it to Telegram, then saves the path.
      *
-     * @return array{group_message_id: ?int, media_path: ?string, media_name: string, media_mime: string, media_size: int}
+     * @return array{group_message_id: ?int, header_message_id: ?int, media_path: ?string, media_name: string, media_mime: string, media_size: int}
      */
     public function forwardFileToGroup(WebChatSession $session, UploadedFile $file): array
     {

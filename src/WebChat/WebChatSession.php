@@ -4,10 +4,26 @@ declare(strict_types=1);
 
 namespace Uzhlaravel\Telegramlogs\WebChat;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $session_token
+ * @property string|null $display_name
+ * @property string|null $email
+ * @property string $status
+ * @property int|null $group_message_id
+ * @property Carbon|null $last_activity_at
+ * @property Carbon|null $closed_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read string $display_label
+ * @property-read Collection<int, WebChatMessage> $messages
+ */
 final class WebChatSession extends Model
 {
     protected $table = 'web_chat_sessions';

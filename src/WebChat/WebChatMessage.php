@@ -6,7 +6,25 @@ namespace Uzhlaravel\Telegramlogs\WebChat;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $session_id
+ * @property string $direction
+ * @property string|null $content
+ * @property string|null $agent_name
+ * @property string|null $media_path
+ * @property string|null $media_name
+ * @property string|null $media_mime
+ * @property int|null $media_size
+ * @property string|null $media_file_id
+ * @property int|null $group_message_id
+ * @property Carbon|null $read_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read WebChatSession $session
+ */
 final class WebChatMessage extends Model
 {
     protected $table = 'web_chat_messages';

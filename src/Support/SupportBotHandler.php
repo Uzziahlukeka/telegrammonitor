@@ -22,11 +22,14 @@ final class SupportBotHandler
 
     private int $timeout;
 
+    private bool $useTopics;
+
     public function __construct()
     {
         $this->botToken = BotRegistry::token('support');
         $this->supportGroupId = (string) config('telegramlogs.support_bot.group_id', '');
         $this->timeout = (int) config('telegramlogs.timeout', 10);
+        $this->useTopics = (bool) config('telegramlogs.support_bot.use_topics', false);
         $this->client = new Client(['timeout' => $this->timeout]);
     }
 
@@ -174,29 +177,34 @@ final class SupportBotHandler
             return;
         }
 
-        // Agent must reply to a specific message
+        // Ignore forum service messages (topic created/closed/reopened/edited, etc.)
+        if ($this->isForumServiceMessage($message)) {
+            return;
+        }
+
+        $from = $message['from'] ?? [];
+        $text = $message['text'] ?? $message['caption'] ?? '';
+
+        // ── Topic mode: a message typed directly inside a ticket's forum topic ──
+        // In a forum group, agents simply write in the topic — no reply required.
+        if ($this->useTopics && isset($message['message_thread_id'])) {
+            $ticket = SupportTicket::where('topic_id', (int) $message['message_thread_id'])->first();
+
+            if ($ticket) {
+                $this->handleAgentTicketMessage($ticket, $message, $from, $text);
+
+                return;
+            }
+        }
+
+        // ── Reply-based flow (flat-mode tickets and the web chat widget) ────────
         if (! isset($message['reply_to_message'])) {
             return;
         }
 
         $repliedToId = (int) $message['reply_to_message']['message_id'];
-        $from = $message['from'] ?? [];
-        $text = $message['text'] ?? $message['caption'] ?? '';
 
-        // Agent commands
-        if (str_starts_with($text, '/close') || str_starts_with($text, '/fermer')) {
-            $this->handleCloseCommand($repliedToId, $from, $message);
-
-            return;
-        }
-
-        if (str_starts_with($text, '/status') || str_starts_with($text, '/statut')) {
-            $this->handleStatusCommand($repliedToId, $message);
-
-            return;
-        }
-
-        // ── Check web chat sessions first ────────────────────────────────────
+        // Web chat sessions are always reply-based, even when ticket topics are on.
         $webChatMsg = WebChatMessage::where('group_message_id', $repliedToId)->first();
 
         if ($webChatMsg) {
@@ -205,26 +213,50 @@ final class SupportBotHandler
             return;
         }
 
-        // ── Then check Telegram-to-Telegram tickets ───────────────────────────
         $ticketMessage = TicketMessage::where('group_message_id', $repliedToId)->first();
 
         if (! $ticketMessage) {
             return; // Not a ticket-related message — ignore silently
         }
 
-        $ticket = $ticketMessage->ticket;
+        $this->handleAgentTicketMessage($ticketMessage->ticket, $message, $from, $text);
+    }
+
+    /**
+     * Relay an agent message (topic or reply based) to the ticket owner's private chat.
+     * The first agent to respond is automatically assigned as the ticket's correspondent.
+     *
+     * @param  array<string, mixed>  $message
+     * @param  array<string, mixed>  $from
+     */
+    private function handleAgentTicketMessage(SupportTicket $ticket, array $message, array $from, string $text): void
+    {
+        // Agent commands operate on the ticket without needing a reply.
+        if (str_starts_with($text, '/close') || str_starts_with($text, '/fermer')) {
+            $this->closeTicket($ticket, $from, $message);
+
+            return;
+        }
+
+        if (str_starts_with($text, '/status') || str_starts_with($text, '/statut')) {
+            $this->sendTicketStatus($ticket, $message);
+
+            return;
+        }
 
         if ($ticket->isClosed()) {
             $this->sendMessage(
-                (string) $message['chat']['id'],
+                $this->supportGroupId,
                 "⚠️ Ce ticket est déjà fermé. Impossible d'envoyer une réponse.",
-                ['reply_to_message_id' => $message['message_id']]
+                array_merge(['reply_to_message_id' => $message['message_id']], $this->threadOptions($ticket))
             );
 
             return;
         }
 
-        $agentName = $this->agentName($from);
+        // First agent to reply becomes the ticket's single correspondent.
+        $this->assignAgentIfNeeded($ticket, $from);
+
         $userChatId = (string) $ticket->user_telegram_id;
 
         // Copy the agent's message to the user's private chat (no "forwarded from" header)
@@ -233,7 +265,7 @@ final class SupportBotHandler
         TicketMessage::create([
             'ticket_id' => $ticket->id,
             'direction' => 'agent_to_user',
-            'agent_name' => $agentName,
+            'agent_name' => $this->agentName($from),
             'message_text' => $text ?: null,
             'media_type' => $this->detectMediaType($message),
             'media_file_id' => $this->getFileId($message),
@@ -247,6 +279,31 @@ final class SupportBotHandler
             'status' => 'in_progress',
             'last_activity_at' => now(),
         ]);
+    }
+
+    /**
+     * Assign the first responding agent as the ticket's correspondent and announce it.
+     *
+     * @param  array<string, mixed>  $from
+     */
+    private function assignAgentIfNeeded(SupportTicket $ticket, array $from): void
+    {
+        if ($ticket->isAssigned() || ! isset($from['id'])) {
+            return;
+        }
+
+        $agentName = $this->agentName($from);
+
+        $ticket->update([
+            'assigned_agent_id' => (int) $from['id'],
+            'assigned_agent_name' => $agentName,
+        ]);
+
+        $this->sendMessage(
+            $this->supportGroupId,
+            "👤 {$agentName} a pris en charge le ticket {$ticket->ticket_tag}.",
+            $this->threadOptions($ticket)
+        );
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -306,25 +363,21 @@ final class SupportBotHandler
         }
     }
 
-    private function handleCloseCommand(int $repliedToId, array $from, array $message): void
+    /**
+     * Close and resolve a ticket, notify the user and (in topic mode) close the forum topic.
+     *
+     * @param  array<string, mixed>  $from
+     * @param  array<string, mixed>  $message
+     */
+    private function closeTicket(SupportTicket $ticket, array $from, array $message): void
     {
-        $ticketMessage = TicketMessage::where('group_message_id', $repliedToId)->first();
-        $groupChatId = (string) $message['chat']['id'];
-
-        if (! $ticketMessage) {
-            $this->sendMessage($groupChatId, '❌ Ticket introuvable pour ce message.', [
-                'reply_to_message_id' => $message['message_id'],
-            ]);
-
-            return;
-        }
-
-        $ticket = $ticketMessage->ticket;
+        $replyOptions = array_merge(
+            ['reply_to_message_id' => $message['message_id']],
+            $this->threadOptions($ticket)
+        );
 
         if ($ticket->isClosed()) {
-            $this->sendMessage($groupChatId, 'ℹ️ Ce ticket est déjà fermé.', [
-                'reply_to_message_id' => $message['message_id'],
-            ]);
+            $this->sendMessage($this->supportGroupId, 'ℹ️ Ce ticket est déjà fermé.', $replyOptions);
 
             return;
         }
@@ -340,41 +393,37 @@ final class SupportBotHandler
             "✅ Votre ticket {$ticket->ticket_tag} a été résolu et fermé.\n\nMerci de nous avoir contacté ! Si vous avez d'autres questions, n'hésitez pas à nous écrire."
         ));
 
-        // Confirm in group
-        $this->sendMessage($groupChatId, "✅ Ticket {$ticket->ticket_tag} fermé par {$this->agentName($from)}.", [
-            'reply_to_message_id' => $message['message_id'],
-        ]);
+        // Confirm in group / topic
+        $this->sendMessage($this->supportGroupId, "✅ Ticket {$ticket->ticket_tag} fermé par {$this->agentName($from)}.", $replyOptions);
+
+        // Archive the forum topic so the staff view stays tidy.
+        if ($this->useTopics && $ticket->topic_id) {
+            $this->closeForumTopic($ticket->topic_id);
+        }
     }
 
-    private function handleStatusCommand(int $repliedToId, array $message): void
+    /**
+     * @param  array<string, mixed>  $message
+     */
+    private function sendTicketStatus(SupportTicket $ticket, array $message): void
     {
-        $ticketMessage = TicketMessage::where('group_message_id', $repliedToId)->first();
-        $groupChatId = (string) $message['chat']['id'];
-
-        if (! $ticketMessage) {
-            $this->sendMessage($groupChatId, '❌ Ticket introuvable pour ce message.', [
-                'reply_to_message_id' => $message['message_id'],
-            ]);
-
-            return;
-        }
-
-        $ticket = $ticketMessage->ticket;
         $total = $ticket->messages()->count();
         $byUser = $ticket->messages()->where('direction', 'user_to_agent')->count();
         $byAgent = $ticket->messages()->where('direction', 'agent_to_user')->count();
         $userTag = $ticket->username ? " (@{$ticket->username})" : '';
         $lastActivity = $ticket->last_activity_at?->format('d/m/Y H:i') ?? 'N/A';
+        $assignedTo = $ticket->assigned_agent_name ?? 'non assigné';
 
-        $this->sendMessage($groupChatId,
+        $this->sendMessage($this->supportGroupId,
             "📋 Ticket {$ticket->ticket_tag}\n".
             "👤 {$ticket->display_name}{$userTag}\n".
             "🆔 ID Telegram : {$ticket->user_telegram_id}\n".
+            "🙋 Correspondant : {$assignedTo}\n".
             "📊 Statut : {$ticket->status}\n".
             "💬 Messages : {$total} ({$byUser} utilisateur / {$byAgent} agent)\n".
             "🕐 Ouvert : {$ticket->created_at->format('d/m/Y H:i')}\n".
             "🔄 Dernière activité : {$lastActivity}",
-            ['reply_to_message_id' => $message['message_id']]
+            array_merge(['reply_to_message_id' => $message['message_id']], $this->threadOptions($ticket))
         );
     }
 
@@ -421,29 +470,38 @@ final class SupportBotHandler
             $header .= "💬 {$text}";
         }
 
-        // All subsequent user messages reply to the ticket's anchor message in group
-        $replyOptions = $ticket->group_message_id
-            ? ['reply_to_message_id' => $ticket->group_message_id]
-            : [];
+        // Topic mode: deliver into the ticket's dedicated forum topic.
+        // Flat mode: thread subsequent messages under the ticket's anchor message.
+        if ($this->useTopics && $ticket->topic_id) {
+            $headerOptions = $this->threadOptions($ticket);
+        } else {
+            $headerOptions = $ticket->group_message_id
+                ? ['reply_to_message_id' => $ticket->group_message_id]
+                : [];
+        }
 
-        $headerResult = $this->sendMessage($this->supportGroupId, $header, $replyOptions);
+        $headerResult = $this->sendMessage($this->supportGroupId, $header, $headerOptions);
 
         if ($headerMsgId = $headerResult['result']['message_id'] ?? null) {
             $ids[] = $headerMsgId;
 
-            // Set the anchor group message on first interaction
+            // Set the anchor group message on first interaction (flat-mode threading)
             if (! $ticket->group_message_id) {
                 $ticket->update(['group_message_id' => $headerMsgId]);
             }
         }
 
-        // If there is media, copy it to the group as a reply to the header
+        // If there is media, copy it to the group right under the header.
         if ($mediaType !== null && isset($headerMsgId)) {
+            $mediaOptions = $this->useTopics && $ticket->topic_id
+                ? $this->threadOptions($ticket)
+                : ['reply_to_message_id' => $headerMsgId];
+
             $mediaResult = $this->copyMessage(
                 $this->supportGroupId,
                 (string) $message['chat']['id'],
                 $message['message_id'],
-                ['reply_to_message_id' => $headerMsgId]
+                $mediaOptions
             );
 
             if ($mediaMsgId = $mediaResult['result']['message_id'] ?? null) {
@@ -469,13 +527,26 @@ final class SupportBotHandler
             return $existing;
         }
 
-        return SupportTicket::create([
+        $ticket = SupportTicket::create([
             'user_telegram_id' => $from['id'],
             'username' => $from['username'] ?? null,
             'first_name' => $from['first_name'] ?? 'Utilisateur',
             'last_name' => $from['last_name'] ?? null,
             'status' => 'open',
         ]);
+
+        // In topic mode, give each ticket its own forum topic so it reads like a
+        // private one-to-one conversation on the staff side.
+        if ($this->useTopics) {
+            $userTag = $ticket->username ? "@{$ticket->username}" : "ID:{$ticket->user_telegram_id}";
+            $topicId = $this->createForumTopic("{$ticket->ticket_tag} · {$ticket->display_name} ({$userTag})");
+
+            if ($topicId !== null) {
+                $ticket->update(['topic_id' => $topicId]);
+            }
+        }
+
+        return $ticket;
     }
 
     private function syncUserInfo(SupportTicket $ticket, array $from): void
@@ -530,6 +601,42 @@ final class SupportBotHandler
         return mb_trim(($from['first_name'] ?? 'Agent').' '.($from['last_name'] ?? ''));
     }
 
+    /**
+     * Telegram send options targeting the ticket's forum topic, when topic mode is on.
+     *
+     * @return array<string, int>
+     */
+    private function threadOptions(SupportTicket $ticket): array
+    {
+        return $this->useTopics && $ticket->topic_id
+            ? ['message_thread_id' => $ticket->topic_id]
+            : [];
+    }
+
+    /**
+     * Whether a group update is a forum service event we should ignore
+     * (topic created/closed/reopened/edited, hidden/unhidden, etc.).
+     *
+     * @param  array<string, mixed>  $message
+     */
+    private function isForumServiceMessage(array $message): bool
+    {
+        foreach ([
+            'forum_topic_created',
+            'forum_topic_edited',
+            'forum_topic_closed',
+            'forum_topic_reopened',
+            'general_forum_topic_hidden',
+            'general_forum_topic_unhidden',
+        ] as $key) {
+            if (isset($message[$key])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Telegram API calls
     // ─────────────────────────────────────────────────────────────────────────
@@ -555,6 +662,56 @@ final class SupportBotHandler
         }
 
         return [];
+    }
+
+    /**
+     * Create a forum topic in the staff group and return its message_thread_id.
+     * Returns null if topics are unavailable (e.g. the group is not a forum).
+     */
+    private function createForumTopic(string $name): ?int
+    {
+        try {
+            $response = $this->client->post(
+                "https://api.telegram.org/bot{$this->botToken}/createForumTopic",
+                ['json' => [
+                    'chat_id' => $this->supportGroupId,
+                    'name' => mb_substr($name, 0, 128),
+                ]]
+            );
+
+            $data = json_decode($response->getBody()->getContents(), true) ?? [];
+
+            if (! ($data['ok'] ?? false)) {
+                Log::warning('SupportBotHandler::createForumTopic rejected by Telegram', [
+                    'description' => $data['description'] ?? null,
+                ]);
+
+                return null;
+            }
+
+            return isset($data['result']['message_thread_id'])
+                ? (int) $data['result']['message_thread_id']
+                : null;
+        } catch (Exception $e) {
+            Log::error('SupportBotHandler::createForumTopic failed: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    private function closeForumTopic(int $threadId): void
+    {
+        try {
+            $this->client->post(
+                "https://api.telegram.org/bot{$this->botToken}/closeForumTopic",
+                ['json' => [
+                    'chat_id' => $this->supportGroupId,
+                    'message_thread_id' => $threadId,
+                ]]
+            );
+        } catch (Exception $e) {
+            Log::error('SupportBotHandler::closeForumTopic failed: '.$e->getMessage());
+        }
     }
 
     private function copyMessage(string $chatId, string $fromChatId, int $messageId, array $options = []): array

@@ -4,9 +4,31 @@ declare(strict_types=1);
 
 namespace Uzhlaravel\Telegramlogs\Support;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $ticket_number
+ * @property int $user_telegram_id
+ * @property string|null $username
+ * @property string $first_name
+ * @property string|null $last_name
+ * @property string $status
+ * @property int|null $group_message_id
+ * @property int|null $topic_id
+ * @property int|null $assigned_agent_id
+ * @property string|null $assigned_agent_name
+ * @property Carbon|null $last_activity_at
+ * @property Carbon|null $closed_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read string $display_name
+ * @property-read string $ticket_tag
+ * @property-read Collection<int, TicketMessage> $messages
+ */
 final class SupportTicket extends Model
 {
     protected $table = 'support_tickets';
@@ -19,6 +41,9 @@ final class SupportTicket extends Model
         'last_name',
         'status',
         'group_message_id',
+        'topic_id',
+        'assigned_agent_id',
+        'assigned_agent_name',
         'last_activity_at',
         'closed_at',
     ];
@@ -26,6 +51,8 @@ final class SupportTicket extends Model
     protected $casts = [
         'user_telegram_id' => 'integer',
         'group_message_id' => 'integer',
+        'topic_id' => 'integer',
+        'assigned_agent_id' => 'integer',
         'last_activity_at' => 'datetime',
         'closed_at' => 'datetime',
     ];
@@ -43,6 +70,11 @@ final class SupportTicket extends Model
     public function isClosed(): bool
     {
         return $this->status === 'closed';
+    }
+
+    public function isAssigned(): bool
+    {
+        return $this->assigned_agent_id !== null;
     }
 
     public function getDisplayNameAttribute(): string

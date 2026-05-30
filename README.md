@@ -29,6 +29,7 @@ Supports **Laravel 10 → 13**, PHP 8.2+, and includes production-only mode so n
     - [HasTelegramActivity Trait](#hastelegramactivity-trait)
     - [TelegramActivity Facade](#telegramactivity-facade)
 - [Support Bot (Ticketing Tunnel)](#support-bot-ticketing-tunnel)
+    - [One Topic per Ticket (forum mode)](#one-topic-per-ticket-forum-mode)
     - [Multiple Bots (logs vs support)](#multiple-bots-logs-vs-support)
     - [Quick Setup](#quick-setup)
     - [Agent Commands](#agent-commands-in-the-staff-group)
@@ -421,6 +422,37 @@ All media types are supported: text, photos, documents, videos, voice messages, 
 
 Each ticket is stored in the database with a mapping between the group message ID and the user's Telegram ID. Agents reply using Telegram's native **Reply** feature — no slash commands needed to answer.
 
+This is the default **flat mode**: every ticket shares the same group and agents must reply to a message to route their answer.
+
+---
+
+### One Topic per Ticket (forum mode)
+
+Prefer each ticket to feel like its **own private, one-to-one conversation** on the staff side? Turn your staff group into a Telegram **forum** (Group Settings → Topics) and enable topic mode:
+
+```env
+TELEGRAM_SUPPORT_USE_TOPICS=true
+```
+
+With topic mode on:
+
+- **One topic per ticket** — every new ticket opens its own forum topic (`#0001 · Alice (@alice)`), so conversations never get mixed together.
+- **No reply needed** — agents just type inside the topic; the bot relays it straight to the customer's private chat.
+- **One correspondent per ticket** — the *first agent who answers* is automatically recorded as the ticket's correspondent (shown via `/status`), and everyone sees who took it.
+- **Tidy archive** — closing a ticket (`/close`) also closes its forum topic.
+
+```
+[User private chat]          [Staff group = forum]
+      User ──────────────►  📂 Topic "#0001 · Alice (@alice)"
+                              ├─ 🆕 Nouveau ticket / 💬 "J'ai un problème..."
+                              ├─ 👤 Bob a pris en charge le ticket #0001
+      User ◄──────────────   └─ Bob types here ──► relayed to the user
+```
+
+Everything is **fully backward compatible**: leave `TELEGRAM_SUPPORT_USE_TOPICS` unset (or `false`) to keep the classic flat, reply-based behaviour. The web chat widget always stays reply-based, even when ticket topics are enabled. Topic mode also works whether the support bot shares the default bot or runs as a dedicated bot.
+
+> The bot must be an **admin with "Manage Topics" permission** in the forum group for it to create and close topics. If topic creation fails (e.g. the group isn't a forum), the ticket gracefully falls back to flat threading.
+
 ---
 
 ### Multiple Bots (logs vs support)
@@ -501,6 +533,9 @@ TELEGRAM_SUPPORT_WEBHOOK_SECRET=a-long-random-secret-string
 
 # Optional
 TELEGRAM_SUPPORT_WEBHOOK_PATH=/telegram/support/webhook
+
+# Optional — one topic per ticket (staff group must be a forum)
+TELEGRAM_SUPPORT_USE_TOPICS=true
 ```
 
 **3. Publish and run migrations:**
@@ -535,6 +570,16 @@ php artisan telegram:support webhook-set --url=https://yourapp.com/telegram/supp
 ---
 
 ### Environment Variables Reference
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `TELEGRAM_SUPPORT_BOT_TOKEN` | No | falls back to `TELEGRAM_BOT_TOKEN` | Dedicated support bot token |
+| `TELEGRAM_SUPPORT_GROUP_ID` | Yes | — | Staff group ID (supergroups start with `-100`) |
+| `TELEGRAM_SUPPORT_USE_TOPICS` | No | `false` | One forum topic per ticket (group must be a forum) |
+| `TELEGRAM_SUPPORT_WEBHOOK_PATH` | No | `/telegram/support/webhook` | Public webhook path |
+| `TELEGRAM_SUPPORT_WEBHOOK_SECRET` | No | `null` | Secret validating incoming webhook requests |
+
+---
 
 ## Security
 

@@ -1,0 +1,17 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 5
+
+    paths:
+        - src
+
+    ignoreErrors:
+        # Public trait shipped for consumer models; intentionally unused inside the package.
+        - identifier: trait.unused
+          path: src/Traits/HasTelegramActivity.php
+        # Blade view name is a runtime string published by the package.
+        - identifier: argument.type
+          path: src/WebChat/WebChatController.php
+          message: '#expects view-string\|null, string given#'

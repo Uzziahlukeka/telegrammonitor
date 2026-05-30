@@ -70,6 +70,12 @@ final class SupportBotCommand extends Command
         $this->line('  <info>Optional:</info>');
         $this->line('  TELEGRAM_SUPPORT_WEBHOOK_PATH=/telegram/support/webhook');
         $this->newLine();
+        $this->line('  <comment>One topic per ticket (forum mode):</comment>');
+        $this->line('  Turn your staff group into a forum (Group Settings → Topics),');
+        $this->line('  then set TELEGRAM_SUPPORT_USE_TOPICS=true. Each ticket then opens');
+        $this->line('  its own topic — an isolated, private-feeling conversation — and the');
+        $this->line('  first agent who answers becomes its dedicated correspondent.');
+        $this->newLine();
 
         // Reflect the user's current topology.
         $mode = BotRegistry::isSingleBotMode() ? 'single-bot (support shares the default bot)' : 'multi-bot (dedicated support bot)';
@@ -179,6 +185,7 @@ final class SupportBotCommand extends Command
             ['Bot ID', (string) ($bot['id'] ?? 'N/A')],
             ['Uses dedicated bot', BotRegistry::hasDedicatedBot('support') ? 'yes' : 'no (shares default)'],
             ['Support group', config('telegramlogs.support_bot.group_id', '(not set)')],
+            ['Topic mode', config('telegramlogs.support_bot.use_topics') ? '✅ one topic per ticket' : 'flat (shared group)'],
             ['Webhook path', config('telegramlogs.support_bot.webhook_path', '/telegram/support/webhook')],
             ['Webhook secret', config('telegramlogs.support_bot.webhook_secret') ? '✅ set' : '⚠️ not set'],
         ]);

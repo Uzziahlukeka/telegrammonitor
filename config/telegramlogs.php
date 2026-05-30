@@ -315,6 +315,23 @@ return [
 
         /*
         |----------------------------------------------------------------------
+        | Forum Topic Mode
+        |----------------------------------------------------------------------
+        |
+        | When enabled, the staff group MUST be a Telegram forum (Group Settings
+        | → Topics). Each new ticket gets its own dedicated forum topic, so every
+        | conversation is isolated and reads like a private one-to-one chat.
+        | Agents simply write inside the topic — no need to reply to a message —
+        | and the first agent to respond is recorded as the ticket's correspondent.
+        |
+        | When disabled (default), the package stays in "flat" mode: all tickets
+        | share the group and agents reply to a message to route their answer.
+        |
+        */
+        'use_topics' => env('TELEGRAM_SUPPORT_USE_TOPICS', false),
+
+        /*
+        |----------------------------------------------------------------------
         | Webhook Path
         |----------------------------------------------------------------------
         |
