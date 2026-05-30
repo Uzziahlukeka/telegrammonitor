@@ -1,0 +1,34 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('web_chat_messages', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('session_id')->constrained('web_chat_sessions')->cascadeOnDelete();
+            $table->enum('direction', ['user_to_agent', 'agent_to_user']);
+            $table->text('content')->nullable();         // text content
+            $table->string('agent_name')->nullable();    // set when direction=agent_to_user
+            $table->string('media_path')->nullable();    // stored file (user uploads)
+            $table->string('media_name')->nullable();    // original filename
+            $table->string('media_mime', 100)->nullable();
+            $table->unsignedInteger('media_size')->nullable();
+            $table->string('media_file_id', 512)->nullable(); // Telegram file_id (agent files)
+            $table->unsignedBigInteger('group_message_id')->nullable(); // for agent-reply lookup
+            $table->timestamp('read_at')->nullable();
+            $table->timestamps();
+            $table->index('session_id');
+            $table->index('group_message_id');
+        });
+    }
+    public function down(): void
+    {
+        Schema::dropIfExists('web_chat_messages');
+    }
+};
