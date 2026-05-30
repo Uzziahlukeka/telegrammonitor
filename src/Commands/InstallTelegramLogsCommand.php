@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\Commands;
+namespace Uzziahlukeka\TelegramMonitor\Commands;
 
 use Illuminate\Console\Command;
 
@@ -19,7 +19,7 @@ final class InstallTelegramLogsCommand extends Command
 
         // 1. Publish config
         $this->call('vendor:publish', [
-            '--provider' => 'Uzhlaravel\Telegramlogs\TelegramlogsServiceProvider',
+            '--provider' => 'Uzziahlukeka\TelegramMonitor\TelegramlogsServiceProvider',
             '--tag' => 'telegramlogs-config',
         ]);
 
@@ -77,7 +77,7 @@ final class InstallTelegramLogsCommand extends Command
         $this->line('  • <info>php artisan telegramlogs:test --config</info>  – view current config');
         $this->newLine();
         $this->line('Add <info>HasTelegramActivity</info> trait to models for automatic event tracking:');
-        $this->line('  use Uzhlaravel\Telegramlogs\Traits\HasTelegramActivity;');
+        $this->line('  use Uzziahlukeka\TelegramMonitor\Traits\HasTelegramActivity;');
         $this->newLine();
 
         $this->line('GitHub: https://github.com/Uzziahlukeka/telegrammonitor');

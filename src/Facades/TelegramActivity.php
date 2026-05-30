@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\Facades;
+namespace Uzziahlukeka\TelegramMonitor\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use Uzhlaravel\Telegramlogs\ActivityLogger;
+use Uzziahlukeka\TelegramMonitor\ActivityLogger;
 
 /**
  * Fluent facade for sending activity notifications to Telegram.

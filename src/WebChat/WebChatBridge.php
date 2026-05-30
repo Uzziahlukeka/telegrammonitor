@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\WebChat;
+namespace Uzziahlukeka\TelegramMonitor\WebChat;
 
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Uzhlaravel\Telegramlogs\BotRegistry;
+use Uzziahlukeka\TelegramMonitor\BotRegistry;
 
 /**
  * Bridge between the web chat widget and the Telegram staff group.

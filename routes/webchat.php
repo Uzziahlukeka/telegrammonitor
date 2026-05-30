@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
-use Uzhlaravel\Telegramlogs\WebChat\WebChatController;
+use Uzziahlukeka\TelegramMonitor\WebChat\WebChatController;
 
 /*
 |--------------------------------------------------------------------------

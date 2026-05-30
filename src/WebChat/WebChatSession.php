@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\WebChat;
+namespace Uzziahlukeka\TelegramMonitor\WebChat;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;

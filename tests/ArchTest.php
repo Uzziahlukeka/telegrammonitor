@@ -8,16 +8,16 @@ arch('it will not use debugging functions')
     ->not->toUse(['die', 'dd', 'dump']);
 
 arch('it will verify commands')
-    ->expect('Uzhlaravel\Telegramlogs\Commands')
+    ->expect('Uzziahlukeka\TelegramMonitor\Commands')
     ->toBeClasses()
     ->toExtend('Illuminate\Console\Command')
-    ->toOnlyBeUsedIn(['src\Commands', 'Uzhlaravel\Telegramlogs']);
+    ->toOnlyBeUsedIn(['src\Commands', 'Uzziahlukeka\TelegramMonitor']);
 
 arch('it will verify facades')
-    ->expect('Uzhlaravel\Telegramlogs\Facades')
+    ->expect('Uzziahlukeka\TelegramMonitor\Facades')
     ->toBeClasses()
     ->toExtend('Illuminate\Support\Facades\Facade');
 
 arch('package classes should be in correct namespace')
-    ->expect('Uzhlaravel\\Telegramlogs')
-    ->toBeClasses()->ignoring('Uzhlaravel\\Telegramlogs\\Traits');
+    ->expect('Uzziahlukeka\\TelegramMonitor')
+    ->toBeClasses()->ignoring('Uzziahlukeka\\TelegramMonitor\\Traits');

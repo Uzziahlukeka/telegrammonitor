@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\Facades;
+namespace Uzziahlukeka\TelegramMonitor\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use Uzhlaravel\Telegramlogs\Support\SupportBotHandler;
+use Uzziahlukeka\TelegramMonitor\Support\SupportBotHandler;
 
 /**
  * @see SupportBotHandler

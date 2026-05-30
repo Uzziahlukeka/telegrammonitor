@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs;
+namespace Uzziahlukeka\TelegramMonitor;
 
 use Exception;
 use GuzzleHttp\Client;

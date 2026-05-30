@@ -1,10 +1,10 @@
 {
-    "name": "uzhlaravel/telegramlogs",
-    "description": "Monitor your Laravel application logs in real-time through Telegram. This package delivers instant notifications of critical events directly to your Telegram channel, with support for threaded discussions and Markdown formatting.",
+    "name": "uzziahlukeka/telegrammonitor",
+    "description": "A Laravel package to monitor logs and run a full Telegram support/ticketing tunnel — user DMs become tickets (with optional one-topic-per-ticket forum mode), agent replies are relayed back, plus an embeddable web chat widget and Eloquent activity logging.",
     "keywords": [
-        "uzhlaravel",
+        "uzziahlukeka",
         "laravel",
-        "telegramlogs",
+        "telegrammonitor",
         "telegram monitor",
         "telegram",
         "direct message",
@@ -26,8 +26,9 @@
     "license": "MIT",
     "authors": [
         {
-            "name": ":uzziahlukeka",
-            "email": "contact@uzziahlukeka.tech",
+            "name": "Uzziah Lukeka",
+            "email": "uzziahlukeka@gmail.com",
+            "homepage": "https://github.com/Uzziahlukeka",
             "role": "Developer"
         }
     ],
@@ -54,13 +55,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Uzhlaravel\\Telegramlogs\\": "src/",
-            "Uzhlaravel\\Telegramlogs\\Database\\Factories\\": "database/factories/"
+            "Uzziahlukeka\\TelegramMonitor\\": "src/",
+            "Uzziahlukeka\\TelegramMonitor\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Uzhlaravel\\Telegramlogs\\Tests\\": "tests/",
+            "Uzziahlukeka\\TelegramMonitor\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -82,13 +83,13 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Uzhlaravel\\Telegramlogs\\TelegramlogsServiceProvider"
+                "Uzziahlukeka\\TelegramMonitor\\TelegramlogsServiceProvider"
             ],
             "aliases": {
-                "Telegramlogs": "Uzhlaravel\\Telegramlogs\\Facades\\Telegramlogs",
-                "TelegramMessage": "Uzhlaravel\\Telegramlogs\\Facades\\TelegramMessage",
-                "TelegramActivity": "Uzhlaravel\\Telegramlogs\\Facades\\TelegramActivity",
-                "TelegramSupport": "Uzhlaravel\\Telegramlogs\\Facades\\TelegramSupport"
+                "Telegramlogs": "Uzziahlukeka\\TelegramMonitor\\Facades\\Telegramlogs",
+                "TelegramMessage": "Uzziahlukeka\\TelegramMonitor\\Facades\\TelegramMessage",
+                "TelegramActivity": "Uzziahlukeka\\TelegramMonitor\\Facades\\TelegramActivity",
+                "TelegramSupport": "Uzziahlukeka\\TelegramMonitor\\Facades\\TelegramSupport"
             }
         }
     },

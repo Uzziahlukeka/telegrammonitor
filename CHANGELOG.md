@@ -8,7 +8,7 @@ Solving Markdown issue
 
 ## v0.1.9.2 - 2025-08-27
 
-**Full Changelog**: https://github.com/Uzziahlukeka/telegrammonitor/compare/v0.1.9.1...v0.1.9.2 to avoid : #Call to an undefined static method Uzhlaravel\Telegramlogs\Facades\TelegramMessage::# using phpstan
+**Full Changelog**: https://github.com/Uzziahlukeka/telegrammonitor/compare/v0.1.9.1...v0.1.9.2 to avoid : #Call to an undefined static method Uzziahlukeka\TelegramMonitor\Facades\TelegramMessage::# using phpstan
 
 ## Direct message - 2025-08-19
 

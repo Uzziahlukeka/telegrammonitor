@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs;
+namespace Uzziahlukeka\TelegramMonitor;
 
 use Illuminate\Support\ServiceProvider;
-use Uzhlaravel\Telegramlogs\Commands\InstallTelegramLogsCommand;
-use Uzhlaravel\Telegramlogs\Commands\SupportBotCommand;
-use Uzhlaravel\Telegramlogs\Commands\TelegramlogsCommand;
-use Uzhlaravel\Telegramlogs\Support\SupportBotHandler;
-use Uzhlaravel\Telegramlogs\WebChat\WebChatBridge;
+use Uzziahlukeka\TelegramMonitor\Commands\InstallTelegramLogsCommand;
+use Uzziahlukeka\TelegramMonitor\Commands\SupportBotCommand;
+use Uzziahlukeka\TelegramMonitor\Commands\TelegramlogsCommand;
+use Uzziahlukeka\TelegramMonitor\Support\SupportBotHandler;
+use Uzziahlukeka\TelegramMonitor\WebChat\WebChatBridge;
 
 final class TelegramlogsServiceProvider extends ServiceProvider
 {

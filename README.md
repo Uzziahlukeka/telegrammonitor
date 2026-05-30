@@ -1,14 +1,14 @@
-# Telegram Logs Monitor for Laravel
+# Telegram Monitor for Laravel
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/uzhlaravel/telegramlogs.svg?style=flat-square)](https://packagist.org/packages/uzhlaravel/telegramlogs)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/uzziahlukeka/telegrammonitor.svg?style=flat-square)](https://packagist.org/packages/uzziahlukeka/telegrammonitor)
 ![GitHub Tests Action Status](https://github.com/Uzziahlukeka/telegrammonitor/actions/workflows/run-tests.yml/badge.svg)
 ![Code style](https://github.com/Uzziahlukeka/telegrammonitor/actions/workflows/fix-php-code-style-issues.yml/badge.svg)
-[![Total Downloads](https://img.shields.io/packagist/dt/uzhlaravel/telegramlogs.svg?style=flat-square)](https://packagist.org/packages/uzhlaravel/telegramlogs)
-[![License](https://img.shields.io/packagist/l/uzhlaravel/telegramlogs.svg?style=flat-square)](https://packagist.org/packages/uzhlaravel/telegramlogs)
+[![Total Downloads](https://img.shields.io/packagist/dt/uzziahlukeka/telegrammonitor.svg?style=flat-square)](https://packagist.org/packages/uzziahlukeka/telegrammonitor)
+[![License](https://img.shields.io/packagist/l/uzziahlukeka/telegrammonitor.svg?style=flat-square)](https://packagist.org/packages/uzziahlukeka/telegrammonitor)
 
 ---
 
-A Laravel package that sends your application logs, exceptions, and model activity events directly to a Telegram channel or group — in real time.
+A Laravel package that turns Telegram into your real-time ops and support hub: stream application logs, exceptions, and model activity to a channel — and run a full **support/ticketing tunnel** where customer DMs become tickets (with optional one-topic-per-ticket forum mode), agent replies are relayed back, plus an embeddable web chat widget.
 
 Supports **Laravel 10 → 13**, PHP 8.2+, and includes production-only mode so notifications stay silent during local development.
 
@@ -72,7 +72,7 @@ Supports **Laravel 10 → 13**, PHP 8.2+, and includes production-only mode so n
 ## Installation
 
 ```bash
-composer require uzhlaravel/telegramlogs
+composer require uzziahlukeka/telegrammonitor
 ```
 
 Run the interactive setup wizard:
@@ -217,7 +217,7 @@ Context:
 Send arbitrary messages to Telegram without going through the logger — useful for contact forms, webhooks, or manual alerts.
 
 ```php
-use Uzhlaravel\Telegramlogs\Facades\TelegramMessage;
+use Uzziahlukeka\TelegramMonitor\Facades\TelegramMessage;
 
 // Simple text
 TelegramMessage::message('Scheduled backup completed.');
@@ -255,7 +255,7 @@ TELEGRAM_ACTIVITY_LOG=true
 Add the trait to any Eloquent model to automatically track its lifecycle events:
 
 ```php
-use Uzhlaravel\Telegramlogs\Traits\HasTelegramActivity;
+use Uzziahlukeka\TelegramMonitor\Traits\HasTelegramActivity;
 
 class Post extends Model
 {
@@ -282,7 +282,7 @@ Properties:
 **Customise per model:**
 
 ```php
-use Uzhlaravel\Telegramlogs\Traits\HasTelegramActivity;
+use Uzziahlukeka\TelegramMonitor\Traits\HasTelegramActivity;
 
 class Order extends Model
 {
@@ -320,7 +320,7 @@ Global event list is controlled in `config/telegramlogs.php`:
 For manual / one-off activity notifications, use the fluent facade:
 
 ```php
-use Uzhlaravel\Telegramlogs\Facades\TelegramActivity;
+use Uzziahlukeka\TelegramMonitor\Facades\TelegramActivity;
 
 TelegramActivity::performedOn($post)
     ->causedBy(auth()->user())
@@ -486,7 +486,7 @@ Tokens are resolved per *role* in `config/telegramlogs.php`. Any role left empty
 **Add your own roles** for any extra bots, then resolve their tokens anywhere:
 
 ```php
-use Uzhlaravel\Telegramlogs\BotRegistry;
+use Uzziahlukeka\TelegramMonitor\BotRegistry;
 
 $token = BotRegistry::token('marketing');   // your custom role, falls back to default
 BotRegistry::hasDedicatedBot('support');     // true only if support has its own token

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs;
+namespace Uzziahlukeka\TelegramMonitor;
 
 /**
  * Central resolver for Telegram bot tokens by role.

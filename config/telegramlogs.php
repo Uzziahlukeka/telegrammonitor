@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Uzhlaravel\Telegramlogs\Telegramlogs;
+use Uzziahlukeka\TelegramMonitor\Telegramlogs;
 
 return [
     /*
@@ -50,7 +50,7 @@ return [
 |   support → support ticket bot + web chat widget
 |
 | You may add as many custom roles as you need. Resolve any role with:
-|   Uzhlaravel\Telegramlogs\BotRegistry::token('your-role')
+|   Uzziahlukeka\TelegramMonitor\BotRegistry::token('your-role')
 |   TelegramMessage::forRole('your-role')->toChat('-100xxx', 'msg')
 |
 | Example with 3 bots:
@@ -211,7 +211,7 @@ return [
     |
     | Add the HasTelegramActivity trait to any model to opt-in:
     |
-    |   use Uzhlaravel\Telegramlogs\Traits\HasTelegramActivity;
+    |   use Uzziahlukeka\TelegramMonitor\Traits\HasTelegramActivity;
     |
     |   class Post extends Model {
     |       use HasTelegramActivity;
@@ -293,7 +293,7 @@ return [
         |----------------------------------------------------------------------
         |
         | Token resolution now lives in the 'bots' section above and is handled
-        | by Uzhlaravel\Telegramlogs\BotRegistry, which falls back to the
+        | by Uzziahlukeka\TelegramMonitor\BotRegistry, which falls back to the
         | default bot automatically. This key is kept as a legacy alias for
         | backward compatibility and is only read when 'bots.support.token'
         | is empty.

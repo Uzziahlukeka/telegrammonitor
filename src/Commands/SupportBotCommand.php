@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\Commands;
+namespace Uzziahlukeka\TelegramMonitor\Commands;
 
 use Illuminate\Console\Command;
-use Uzhlaravel\Telegramlogs\BotRegistry;
-use Uzhlaravel\Telegramlogs\Support\SupportBotHandler;
-use Uzhlaravel\Telegramlogs\Support\SupportTicket;
+use Uzziahlukeka\TelegramMonitor\BotRegistry;
+use Uzziahlukeka\TelegramMonitor\Support\SupportBotHandler;
+use Uzziahlukeka\TelegramMonitor\Support\SupportTicket;
 
 final class SupportBotCommand extends Command
 {

@@ -7,6 +7,10 @@ parameters:
     paths:
         - src
 
+    # The view-string ignore below only triggers when the package view isn't
+    # discovered during analysis, so don't fail when it isn't matched.
+    reportUnmatchedIgnoredErrors: false
+
     ignoreErrors:
         # Public trait shipped for consumer models; intentionally unused inside the package.
         - identifier: trait.unused

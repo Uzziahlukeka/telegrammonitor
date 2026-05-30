@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs;
+namespace Uzziahlukeka\TelegramMonitor;
 
 use DateTimeInterface;
 use GuzzleHttp\Client;

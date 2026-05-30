@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\Commands;
+namespace Uzziahlukeka\TelegramMonitor\Commands;
 
 use Exception;
 use Illuminate\Console\Command;
-use Uzhlaravel\Telegramlogs\Facades\TelegramActivity;
-use Uzhlaravel\Telegramlogs\Facades\Telegramlogs;
-use Uzhlaravel\Telegramlogs\TelegramMessage;
+use Uzziahlukeka\TelegramMonitor\Facades\TelegramActivity;
+use Uzziahlukeka\TelegramMonitor\Facades\Telegramlogs;
+use Uzziahlukeka\TelegramMonitor\TelegramMessage;
 
 final class TelegramlogsCommand extends Command
 {

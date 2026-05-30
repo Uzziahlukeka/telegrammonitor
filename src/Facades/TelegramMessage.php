@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\Facades;
+namespace Uzziahlukeka\TelegramMonitor\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
@@ -15,7 +15,7 @@ final class TelegramMessage extends Facade
      * @method static array|bool test()
      * @method static array|bool getBotInfo()
      *
-     * @see \Uzhlaravel\Telegramlogs\TelegramMessage
+     * @see \Uzziahlukeka\TelegramMonitor\TelegramMessage
      */
     protected static function getFacadeAccessor()
     {

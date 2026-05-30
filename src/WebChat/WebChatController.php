@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\WebChat;
+namespace Uzziahlukeka\TelegramMonitor\WebChat;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

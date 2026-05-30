@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\Traits;
+namespace Uzziahlukeka\TelegramMonitor\Traits;
 
-use Uzhlaravel\Telegramlogs\ActivityLogger;
+use Uzziahlukeka\TelegramMonitor\ActivityLogger;
 
 /**
  * Add this trait to any Eloquent model to automatically send
@@ -12,7 +12,7 @@ use Uzhlaravel\Telegramlogs\ActivityLogger;
  *
  * Example:
  *
- *   use Uzhlaravel\Telegramlogs\Traits\HasTelegramActivity;
+ *   use Uzziahlukeka\TelegramMonitor\Traits\HasTelegramActivity;
  *
  *   class Post extends Model
  *   {

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\Support;
+namespace Uzziahlukeka\TelegramMonitor\Support;
 
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
-use Uzhlaravel\Telegramlogs\BotRegistry;
-use Uzhlaravel\Telegramlogs\WebChat\WebChatBridge;
-use Uzhlaravel\Telegramlogs\WebChat\WebChatMessage;
+use Uzziahlukeka\TelegramMonitor\BotRegistry;
+use Uzziahlukeka\TelegramMonitor\WebChat\WebChatBridge;
+use Uzziahlukeka\TelegramMonitor\WebChat\WebChatMessage;
 
 final class SupportBotHandler
 {

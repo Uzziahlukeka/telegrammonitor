@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Uzhlaravel\Telegramlogs\Facades;
+namespace Uzziahlukeka\TelegramMonitor\Facades;
 
 use Illuminate\Log\LogManager;
 use Illuminate\Support\Facades\Facade;
